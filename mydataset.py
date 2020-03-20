@@ -1,12 +1,10 @@
-import torch
-from torch.utils.data import Dataset, DataLoader
 import os
-from numpy.random import choice as npc
-import numpy as np
-import time
 import random
-import torchvision.datasets as dset
+
+import numpy as np
+import torch
 from PIL import Image
+from torch.utils.data import Dataset
 
 
 class OmniglotTrain(Dataset):
@@ -35,7 +33,7 @@ class OmniglotTrain(Dataset):
         return datas, idx
 
     def __len__(self):
-        return  21000000
+        return 21000000
 
     def __getitem__(self, index):
         # image1 = random.choice(self.dataset.imgs)
@@ -115,6 +113,6 @@ class OmniglotTest(Dataset):
 
 
 # test
-if __name__=='__main__':
-    omniglotTrain = OmniglotTrain('./images_background', 30000*8)
+if __name__ == '__main__':
+    omniglotTrain = OmniglotTrain('./images_background', 30000 * 8)
     print(omniglotTrain)
