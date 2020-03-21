@@ -12,14 +12,15 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from model import Siamese
-from mydataset import OmniglotTrain, OmniglotTest
+from mydataset import OmniglotTrain, OmniglotTest, CUBTrain, CUBTest
 
 if __name__ == '__main__':
 
     Flags = gflags.FLAGS
-    gflags.DEFINE_bool("cuda", True, "use cuda")
+    gflags.DEFINE_bool("cuda", False, "use cuda")
     gflags.DEFINE_string("train_path", "/home/data/pin/data/omniglot/images_background", "training folder")
     gflags.DEFINE_string("test_path", "/home/data/pin/data/omniglot/images_evaluation", 'path of testing folder')
+    gflags.DEFINE_string("sub_path", "", 'inner folder')
     gflags.DEFINE_integer("way", 20, "how much way one-shot learning")
     gflags.DEFINE_string("times", 400, "number of samples to test accuracy")
     gflags.DEFINE_integer("workers", 4, "number of dataLoader workers")
@@ -45,8 +46,10 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = Flags.gpu_ids
     print("use gpu:", Flags.gpu_ids, "to train.")
 
-    trainSet = OmniglotTrain(Flags.train_path, transform=data_transforms)
-    testSet = OmniglotTest(Flags.test_path, transform=transforms.ToTensor(), times=Flags.times, way=Flags.way)
+    trainSet = CUBTrain(Flags.train_path, Flags.sub_path, transform=data_transforms)
+    testSet = CUBTest(Flags.test_path, Flags.sub_path, transform=transforms.ToTensor(), times=Flags.times, way=Flags.way)
+
+
     testLoader = DataLoader(testSet, batch_size=Flags.way, shuffle=False, num_workers=Flags.workers)
 
     trainLoader = DataLoader(trainSet, batch_size=Flags.batch_size, shuffle=False, num_workers=Flags.workers)
