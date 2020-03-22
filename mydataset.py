@@ -35,10 +35,13 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
         if data_class not in datas.keys():
             datas[data_class] = []
         # print('fuck')
-        img = Image.open(filePath)
-        datas[data_class].append(img.copy().resize((500, 500)))
-        img.close()
-        if num_classes < data_class + 1:
+        # img = Image.open(filePath)
+        # datas[data_class].append(img.copy().resize((500, 500)))
+        # img.close()
+
+        datas[data_class].append(filePath)
+
+    if num_classes < data_class + 1:
             num_classes = data_class + 1
 
     print("finish loading dataset to memory")
@@ -68,8 +71,8 @@ class CUBTrain(Dataset):
         if index % 2 == 1:
             label = 1.0
             idx1 = random.randint(0, self.num_classes - 1)
-            image1 = random.choice(self.datas[idx1])
-            image2 = random.choice(self.datas[idx1])
+            image1 = Image.open(random.choice(self.datas[idx1]))
+            image2 = Image.open(random.choice(self.datas[idx1]))
         # get image from different class
         else:
             label = 0.0
@@ -77,8 +80,11 @@ class CUBTrain(Dataset):
             idx2 = random.randint(0, self.num_classes - 1)
             while idx1 == idx2:
                 idx2 = random.randint(0, self.num_classes - 1)
-            image1 = random.choice(self.datas[idx1])
-            image2 = random.choice(self.datas[idx2])
+            image1 = Image.open(random.choice(self.datas[idx1]))
+            image2 = Image.open(random.choice(self.datas[idx2]))
+
+        image1 = image1.resize((500, 500))
+        image2 = image2.resize((500, 500))
 
         if self.transform:
             image1 = self.transform(image1)
@@ -109,14 +115,14 @@ class CUBTest(Dataset):
         # generate image pair from same class
         if idx == 0:
             self.c1 = random.randint(0, self.num_classes - 1)
-            self.img1 = random.choice(self.datas[self.c1])
-            img2 = random.choice(self.datas[self.c1])
+            self.img1 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500))
+            img2 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500))
         # generate image pair from different class
         else:
             c2 = random.randint(0, self.num_classes - 1)
             while self.c1 == c2:
                 c2 = random.randint(0, self.num_classes - 1)
-            img2 = random.choice(self.datas[c2])
+            img2 = Image.open(random.choice(self.datas[c2])).resize((500, 500))
 
         if self.transform:
             img1 = self.transform(self.img1)
