@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 
 
 def loadCUBToMem(dataPath, subPath, isTrain=True):
-    isTrain = int(isTrain)   # True: 1, False: 0
+    isTrain = int(isTrain)  # True: 1, False: 0
     if subPath is not None:
         imagePath = os.path.join(dataPath, subPath)
     else:
@@ -17,7 +17,7 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
     datas = {}
     # degrees = [0, 90, 180, 270]
     # with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f:
-    with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f: #TODO
+    with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f:  # TODO
         train_test_split = np.array(list(map(lambda x: x.split(), f.read().split('\n')[:-1])), dtype=int)
 
     with open(os.path.join(dataPath, 'images.txt'), 'r') as f:
@@ -42,22 +42,20 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
         datas[data_class].append(filePath)
 
     if num_classes < data_class + 1:
-            num_classes = data_class + 1
+        num_classes = data_class + 1
 
     print("finish loading dataset to memory")
     return datas, num_classes, num_instances
 
+
 class CUBTrain(Dataset):
 
-    def __init__(self, dataPath, subPath=None, transform=None):
+    def __init__(self, args, transform=None):
         super(CUBTrain, self).__init__()
-        np.random.seed(0)
+        np.random.seed(args.seed)
         # self.dataset = dataset
         self.transform = transform
-        self.datas, self.num_classes, self.length = loadCUBToMem(dataPath, subPath, isTrain=True)
-
-        # import pdb
-        # pdb.set_trace()
+        self.datas, self.num_classes, self.length = loadCUBToMem(args.dataset_path, args.subdir_path, isTrain=True)
 
     def __len__(self):
         return self.length
@@ -92,19 +90,17 @@ class CUBTrain(Dataset):
         return image1, image2, torch.from_numpy(np.array([label], dtype=np.float32))
 
 
-
 class CUBTest(Dataset):
 
-    def __init__(self, dataPath, subPath=None, transform=None, times=200, way=20):
-        np.random.seed(1)
+    def __init__(self, args, transform=None):
+        np.random.seed(args.seed)
         super(CUBTest, self).__init__()
         self.transform = transform
-        self.times = times
-        self.way = way
+        self.times = args.times
+        self.way = args.way
         self.img1 = None
         self.c1 = None
-        self.datas, self.num_classes, _ = loadCUBToMem(dataPath, subPath, isTrain=False)
-
+        self.datas, self.num_classes, _ = loadCUBToMem(args.dataset_path, args.subdir_path, isTrain=False)
 
     def __len__(self):
         return self.times * self.way
@@ -130,17 +126,14 @@ class CUBTest(Dataset):
         return img1, img2
 
 
-
-
-
 class OmniglotTrain(Dataset):
 
-    def __init__(self, dataPath, transform=None):
+    def __init__(self, args, transform=None):
         super(OmniglotTrain, self).__init__()
-        np.random.seed(0)
+        np.random.seed(args.seed)
         # self.dataset = dataset
         self.transform = transform
-        self.datas, self.num_classes = self.loadToMem(dataPath)
+        self.datas, self.num_classes = self.loadToMem(args.dataset_path)
         # import pdb
         # pdb.set_trace()
 
@@ -190,7 +183,6 @@ class OmniglotTrain(Dataset):
             image2 = self.transform(image2)
         return image1, image2, torch.from_numpy(np.array([label], dtype=np.float32))
 
-
     def __len__(self):
         return 21000000
 
@@ -223,15 +215,15 @@ class OmniglotTrain(Dataset):
 
 class OmniglotTest(Dataset):
 
-    def __init__(self, dataPath, transform=None, times=200, way=20):
+    def __init__(self, args, transform=None):
         np.random.seed(1)
         super(OmniglotTest, self).__init__()
         self.transform = transform
-        self.times = times
-        self.way = way
+        self.times = args.times
+        self.way = args.way
         self.img1 = None
         self.c1 = None
-        self.datas, self.num_classes = self.loadToMem(dataPath)
+        self.datas, self.num_classes = self.loadToMem(args.dataset_path)
 
     def loadToMem(self, dataPath):
         print("begin loading test dataset to memory")
