@@ -83,8 +83,8 @@ class CUBTrain(Dataset):
             image1 = Image.open(random.choice(self.datas[idx1]))
             image2 = Image.open(random.choice(self.datas[idx2]))
 
-        image1 = image1.resize((500, 500))
-        image2 = image2.resize((500, 500))
+        image1 = image1.resize((500, 500)).convert('RGB')
+        image2 = image2.resize((500, 500)).convert('RGB')
 
         if self.transform:
             image1 = self.transform(image1)
@@ -115,14 +115,14 @@ class CUBTest(Dataset):
         # generate image pair from same class
         if idx == 0:
             self.c1 = random.randint(0, self.num_classes - 1)
-            self.img1 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500))
-            img2 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500))
+            self.img1 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500)).convert('RGB')
+            img2 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500)).convert('RGB')
         # generate image pair from different class
         else:
             c2 = random.randint(0, self.num_classes - 1)
             while self.c1 == c2:
                 c2 = random.randint(0, self.num_classes - 1)
-            img2 = Image.open(random.choice(self.datas[c2])).resize((500, 500))
+            img2 = Image.open(random.choice(self.datas[c2])).resize((500, 500)).convert('RGB')
 
         if self.transform:
             img1 = self.transform(self.img1)
