@@ -17,7 +17,7 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
     datas = {}
     # degrees = [0, 90, 180, 270]
     # with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f:
-    with open(os.path.join(dataPath, 'xaa'), 'r') as f: #TODO
+    with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f: #TODO
         train_test_split = np.array(list(map(lambda x: x.split(), f.read().split('\n')[:-1])), dtype=int)
 
     with open(os.path.join(dataPath, 'images.txt'), 'r') as f:

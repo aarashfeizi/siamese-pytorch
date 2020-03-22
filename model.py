@@ -7,20 +7,32 @@ class Siamese(nn.Module):
     def __init__(self):
         super(Siamese, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(3, 64, 10),  # 64@96*96 #TODO changed channels from 1 to 3
+            nn.Conv2d(3, 64, 10),  # 64@491*491 #TODO changed channels from 1 to 3
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),  # 64@48*48
+
             nn.Conv2d(64, 128, 7),
             nn.ReLU(),  # 128@42*42
             nn.MaxPool2d(2),  # 128@21*21
+
             nn.Conv2d(128, 128, 4),
             nn.ReLU(),  # 128@18*18
             nn.MaxPool2d(2),  # 128@9*9
+
             nn.Conv2d(128, 256, 4),
             nn.ReLU(),  # 256@6*6
+            nn.MaxPool2d(2),  # 128@9*9
+
+            nn.Conv2d(256, 512, 4),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+
+            nn.Conv2d(512, 512, 4),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
         )
         # self.liner = nn.Sequential(nn.Linear(9216, 4096), nn.Sigmoid()) # for batch 128 #TODO
-        self.liner = nn.Sequential(nn.Linear(3025, 4096), nn.Sigmoid()) # for barch 16??
+        self.liner = nn.Sequential(nn.Linear(8192, 4096), nn.Sigmoid()) # for barch 16??
         self.out = nn.Linear(4096, 1)
 
     def forward_one(self, x):
