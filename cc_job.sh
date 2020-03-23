@@ -21,9 +21,9 @@ python3 train.py -cuda \
         -gpu 0 \
         -wr 10 \
         -bs 8 \
-        -log_freq 1000 \
-        -test_freq 10000 \
-        -save_freq 10000 \
+        -lf 1000 \
+        -tf 10000 \
+        -sf 10000 \
         -ms 5000000 \
         -lr 0.00006
 

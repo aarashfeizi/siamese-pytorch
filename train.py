@@ -71,6 +71,8 @@ if __name__ == '__main__':
     time_start = time.time()
     queue = deque()
 
+    print('steps:', args.max_steps)
+
     for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
         if batch_id > args.max_steps:
             break
