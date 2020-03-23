@@ -75,6 +75,7 @@ if __name__ == '__main__':
 
     epochs = int(args.max_steps / len(trainLoader))
 
+    total_batch_id = 0
     for epoch in range(epochs):
         for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
             if batch_id > args.max_steps:
@@ -90,16 +91,18 @@ if __name__ == '__main__':
             loss.backward()
 
             opt.step()
-            if batch_id % args.log_freq == 0:
+            total_batch_id += 1
+
+            if total_batch_id % args.log_freq == 0:
                 print('epoch: %d, batch: [%d]\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
-                    epoch, batch_id, loss_val / args.log_freq, time.time() - time_start))
+                    epoch, total_batch_id, loss_val / args.log_freq, time.time() - time_start))
                 loss_val = 0
                 time_start = time.time()
 
-            if batch_id % args.save_freq == 0:
+            if total_batch_id % args.save_freq == 0:
                 torch.save(net.state_dict(), args.save_path + '/model-inter-' + str(batch_id + 1) + ".pt")
 
-            if batch_id % args.test_freq == 0:
+            if total_batch_id % args.test_freq == 0:
                 right, error = 0, 0
                 for _, (test1, test2) in enumerate(testLoader, 1):
                     if args.cuda:
@@ -114,7 +117,7 @@ if __name__ == '__main__':
 
                 print('*' * 70)
                 print('epoch: %d, batch: [%d]\tTest set\tcorrect:\t%d\terror:\t%d\tprecision:\t%f' % (
-                    epoch, batch_id, right, error, right * 1.0 / (right + error)))
+                    epoch, total_batch_id, right, error, right * 1.0 / (right + error)))
                 print('*' * 70)
                 queue.append(right * 1.0 / (right + error))
             train_loss.append(loss_val)
