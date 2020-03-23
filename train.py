@@ -63,13 +63,13 @@ if __name__ == '__main__':
 
     net.train()
 
-    optimizer = torch.optim.Adam(net.parameters(), lr=args.lr)
-    optimizer.zero_grad()
+    opt = torch.optim.Adam(net.parameters(), lr=args.lr)
+    opt.zero_grad()
 
     train_loss = []
     loss_val = 0
     time_start = time.time()
-    queue = deque(maxlen=20)
+    queue = deque()
 
     for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
         if batch_id > args.max_steps:
@@ -78,20 +78,13 @@ if __name__ == '__main__':
             img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
         else:
             img1, img2, label = Variable(img1), Variable(img2), Variable(label)
-        optimizer.zero_grad()
+        opt.zero_grad()
         output = net.forward(img1, img2)
         loss = loss_fn(output, label)
         loss_val += loss.item()
         loss.backward()
-        #
-        # import pdb
-        # pdb.set_trace()
-        #
-        # for p in net.parameters():
-        #     print(p.grad)
-        #     print('***')
 
-        optimizer.step()
+        opt.step()
         if batch_id % args.log_freq == 0:
             print('[%d]\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
                 batch_id, loss_val / args.log_freq, time.time() - time_start))
@@ -129,4 +122,5 @@ if __name__ == '__main__':
     for d in queue:
         acc += d
     print("#" * 70)
-    print("final accuracy: ", acc / 20)
+    print('queue len: ', len(queue))
+    print("final accuracy: ", acc / len(queue))
