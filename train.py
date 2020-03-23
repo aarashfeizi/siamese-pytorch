@@ -93,6 +93,9 @@ if __name__ == '__main__':
             opt.step()
             total_batch_id += 1
 
+            if total_batch_id % 100 == 0:
+              print('batch: ', total_batch_id)
+
             if total_batch_id % args.log_freq == 0:
                 print('epoch: %d, batch: [%d]\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
                     epoch, total_batch_id, loss_val / args.log_freq, time.time() - time_start))
