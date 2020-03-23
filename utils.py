@@ -10,8 +10,8 @@ def get_args():
     parser.add_argument('-dsn', '--dataset_name', default='omniglot', choices=['omniglot', 'cub'])
     parser.add_argument('-dsp', '--dataset_path', default='CUB_200_2011/')
     parser.add_argument('-sdp', '--subdir_path', default='images/')
-    parser.add_argument('-trp', '--train_path', default='/omniglot/images_background')
-    parser.add_argument('-tsp', '--test_path', default='/omniglot/images_evaluation')
+    parser.add_argument('-trp', '--train_path', default='omniglot/python/images_background')
+    parser.add_argument('-tsp', '--test_path', default='omniglot/python/images_evaluation')
     parser.add_argument('-sp', '--save_path', default='models/', help="path to store model")
 
     parser.add_argument('-s', '--seed', default=402, type=int, help="random seed")

@@ -9,36 +9,36 @@ class Siamese(nn.Module):
         self.conv = nn.Sequential(
             nn.Conv2d(3, 64, 10),  # 64@491*491 #TODO changed channels from 1 to 3
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),  # 64@48*48
+            nn.MaxPool2d(2),  # 64@246*246
 
             nn.Conv2d(64, 128, 7),
-            nn.ReLU(),  # 128@42*42
-            nn.MaxPool2d(2),  # 128@21*21
+            nn.ReLU(),  # 128@240*240
+            nn.MaxPool2d(2),  # 128@120*120
 
-            nn.Conv2d(128, 128, 4),
-            nn.ReLU(),  # 128@18*18
-            nn.MaxPool2d(2),  # 128@9*9
+            nn.Conv2d(128, 128, 4),  # 128@117*117
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # 128@59*59
 
             nn.Conv2d(128, 256, 4),
-            nn.ReLU(),  # 256@6*6
-            nn.MaxPool2d(2),  # 128@9*9
+            nn.ReLU(),  # 256@56*56
+            # nn.MaxPool2d(2),  # 256@28*28
 
-            nn.Conv2d(256, 512, 4),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            nn.Conv2d(512, 512, 4),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
+            # nn.Conv2d(256, 512, 4),
+            # nn.ReLU(),  # 512@25*25
+            # nn.MaxPool2d(2),  # 512@13*13
+            #
+            # nn.Conv2d(512, 512, 4),
+            # nn.ReLU(),  # 512@10*10
+            # nn.MaxPool2d(2),  # 512@5*5
         )
-        # self.liner = nn.Sequential(nn.Linear(9216, 4096), nn.Sigmoid()) # for batch 128 #TODO
-        self.liner = nn.Sequential(nn.Linear(8192, 4096), nn.Sigmoid()) # for barch 16??
+        self.linear = nn.Sequential(nn.Linear(9216, 4096), nn.Sigmoid())  #TODO
+        # self.linear = nn.Sequential(nn.Linear(8192, 4096), nn.Sigmoid())  # 512 * 4 * 4 input
         self.out = nn.Linear(4096, 1)
 
     def forward_one(self, x):
         x = self.conv(x)
         x = x.view(x.size()[0], -1)
-        x = self.liner(x)
+        x = self.linear(x)
         return x
 
     def forward(self, x1, x2):

@@ -6,6 +6,8 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
+RESHAPE_SIZE = (105, 105)
+
 
 def loadCUBToMem(dataPath, subPath, isTrain=True):
     isTrain = int(isTrain)  # True: 1, False: 0
@@ -36,7 +38,7 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
             datas[data_class] = []
         # print('fuck')
         # img = Image.open(filePath)
-        # datas[data_class].append(img.copy().resize((500, 500)))
+        # datas[data_class].append(img.copy().resize(RESHAPE_SIZE))
         # img.close()
 
         datas[data_class].append(filePath)
@@ -81,8 +83,8 @@ class CUBTrain(Dataset):
             image1 = Image.open(random.choice(self.datas[idx1]))
             image2 = Image.open(random.choice(self.datas[idx2]))
 
-        image1 = image1.resize((500, 500)).convert('RGB')
-        image2 = image2.resize((500, 500)).convert('RGB')
+        image1 = image1.resize(RESHAPE_SIZE).convert('RGB')
+        image2 = image2.resize(RESHAPE_SIZE).convert('RGB')
 
         if self.transform:
             image1 = self.transform(image1)
@@ -111,14 +113,14 @@ class CUBTest(Dataset):
         # generate image pair from same class
         if idx == 0:
             self.c1 = random.randint(0, self.num_classes - 1)
-            self.img1 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500)).convert('RGB')
-            img2 = Image.open(random.choice(self.datas[self.c1])).resize((500, 500)).convert('RGB')
+            self.img1 = Image.open(random.choice(self.datas[self.c1])).resize(RESHAPE_SIZE).convert('RGB')
+            img2 = Image.open(random.choice(self.datas[self.c1])).resize(RESHAPE_SIZE).convert('RGB')
         # generate image pair from different class
         else:
             c2 = random.randint(0, self.num_classes - 1)
             while self.c1 == c2:
                 c2 = random.randint(0, self.num_classes - 1)
-            img2 = Image.open(random.choice(self.datas[c2])).resize((500, 500)).convert('RGB')
+            img2 = Image.open(random.choice(self.datas[c2])).resize(RESHAPE_SIZE).convert('RGB')
 
         if self.transform:
             img1 = self.transform(self.img1)
@@ -133,7 +135,7 @@ class OmniglotTrain(Dataset):
         np.random.seed(args.seed)
         # self.dataset = dataset
         self.transform = transform
-        self.datas, self.num_classes = self.loadToMem(args.dataset_path)
+        self.datas, self.num_classes = self.loadToMem(args.train_path)
         # import pdb
         # pdb.set_trace()
 
@@ -147,10 +149,6 @@ class OmniglotTrain(Dataset):
                 for charPath in os.listdir(os.path.join(dataPath, alphaPath)):
                     datas[idx] = []
                     for samplePath in os.listdir(os.path.join(dataPath, alphaPath, charPath)):
-                        print("samplePath: ", samplePath)
-                        print("alphaPath: ", alphaPath)
-                        print("charPath: ", charPath)
-                        print("datapath: ", dataPath)
                         filePath = os.path.join(dataPath, alphaPath, charPath, samplePath)
                         datas[idx].append(Image.open(filePath).rotate(agree).convert('L'))
                     idx += 1
@@ -223,7 +221,7 @@ class OmniglotTest(Dataset):
         self.way = args.way
         self.img1 = None
         self.c1 = None
-        self.datas, self.num_classes = self.loadToMem(args.dataset_path)
+        self.datas, self.num_classes = self.loadToMem(args.test_path)
 
     def loadToMem(self, dataPath):
         print("begin loading test dataset to memory")

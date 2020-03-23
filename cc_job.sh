@@ -14,12 +14,12 @@ source /home/aarash/venv-siamese/bin/activate
 
 
 python3 train.py -cuda \
-    -dsn cub \
-    -dsp CUB_200_2011 \
-    -sdp images \
-    -sp models \
-	-gpu 0 \
-	-wr 10 \
-    -bs 8 \
-	-e 50000 \
-	-lr 0.00006
+        -dsn cub \
+        -dsp CUB_200_2011 \
+        -sdp images \
+        -sp models \
+        -gpu 0 \
+        -wr 10 \
+        -bs 8 \
+        -e 50000 \
+        -lr 0.00006

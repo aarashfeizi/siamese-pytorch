@@ -39,7 +39,7 @@ if __name__ == '__main__':
     if args.dataset_name == 'cub':
         trainSet = CUBTrain(args, transform=data_transforms)
         testSet = CUBTest(args, transform=transforms.ToTensor())
-    elif args.ddataset_name == 'omniglot':
+    elif args.dataset_name == 'omniglot':
         trainSet = OmniglotTrain(args, transform=data_transforms)
         testSet = OmniglotTest(args, transform=transforms.ToTensor())
     else:
@@ -83,6 +83,15 @@ if __name__ == '__main__':
         loss = loss_fn(output, label)
         loss_val += loss.item()
         loss.backward()
+        #
+        # import pdb
+        # pdb.set_trace()
+        #
+        # for p in net.parameters():
+        #     print(p.grad)
+        #     print('***')
+
+
         optimizer.step()
         if batch_id % args.log_freq == 0:
             print('[%d]\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
