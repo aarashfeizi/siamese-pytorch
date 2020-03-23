@@ -17,8 +17,7 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
         imagePath = dataPath
     print("begin loading dataset to memory")
     datas = {}
-    # degrees = [0, 90, 180, 270]
-    # with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f:
+
     with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f:  # TODO
         train_test_split = np.array(list(map(lambda x: x.split(), f.read().split('\n')[:-1])), dtype=int)
 
@@ -28,7 +27,6 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
     data_idx = train_test_split[train_test_split[:, 1] == isTrain]
     num_instances = data_idx.shape[0]
 
-    # for degree in degrees:
     num_classes = 1
     for idx in data_idx:
         path = idx2path[str(idx[0])]
@@ -36,10 +34,6 @@ def loadCUBToMem(dataPath, subPath, isTrain=True):
         data_class = int(path[0:3]) - 1
         if data_class not in datas.keys():
             datas[data_class] = []
-        # print('fuck')
-        # img = Image.open(filePath)
-        # datas[data_class].append(img.copy().resize(RESHAPE_SIZE))
-        # img.close()
 
         datas[data_class].append(filePath)
 

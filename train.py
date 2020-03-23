@@ -72,7 +72,7 @@ if __name__ == '__main__':
     queue = deque(maxlen=20)
 
     for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
-        if batch_id > args.epochs:
+        if batch_id > args.max_steps:
             break
         if args.cuda:
             img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
@@ -90,7 +90,6 @@ if __name__ == '__main__':
         # for p in net.parameters():
         #     print(p.grad)
         #     print('***')
-
 
         optimizer.step()
         if batch_id % args.log_freq == 0:

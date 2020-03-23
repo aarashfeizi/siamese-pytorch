@@ -23,7 +23,7 @@ def get_args():
     parser.add_argument('-lf', '--log_freq', default=10, type=int, help="show result after each show_every iter.")
     parser.add_argument('-sf', '--save_freq', default=100, type=int, help="save model after each save_every iter.")
     parser.add_argument('-tf', '--test_freq', default=100, type=int, help="test model after each test_every iter.")
-    parser.add_argument('-e', '--epochs', default=50000, type=int, help="number of epochs before stopping")
+    parser.add_argument('-ms', '--max_steps', default=50000, type=int, help="number of steps before stopping")
 
     args = parser.parse_args()
 
