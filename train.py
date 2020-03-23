@@ -52,7 +52,7 @@ if __name__ == '__main__':
     trainLoader = DataLoader(trainSet, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
 
     loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean')
-    net = Siamese()
+    net = Siamese(args)
 
     # multi gpu
     if len(args.gpu_ids.split(",")) > 1:
@@ -98,8 +98,10 @@ if __name__ == '__main__':
                 batch_id, loss_val / args.log_freq, time.time() - time_start))
             loss_val = 0
             time_start = time.time()
+
         if batch_id % args.save_freq == 0:
             torch.save(net.state_dict(), args.save_path + '/model-inter-' + str(batch_id + 1) + ".pt")
+
         if batch_id % args.test_freq == 0:
             right, error = 0, 0
             for _, (test1, test2) in enumerate(testLoader, 1):
@@ -112,6 +114,7 @@ if __name__ == '__main__':
                     right += 1
                 else:
                     error += 1
+
             print('*' * 70)
             print('[%d]\tTest set\tcorrect:\t%d\terror:\t%d\tprecision:\t%f' % (
                 batch_id, right, error, right * 1.0 / (right + error)))

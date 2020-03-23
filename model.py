@@ -4,10 +4,17 @@ import torch.nn as nn
 
 class Siamese(nn.Module):
 
-    def __init__(self):
+    def __init__(self, args):
         super(Siamese, self).__init__()
+        if args.dataset_name == 'cub':
+            input_channel = 3
+        elif args.dataset_name == 'omniglot':
+            input_channel = 1
+        else:
+            input_channel = -1  # error
+
         self.conv = nn.Sequential(
-            nn.Conv2d(3, 64, 10),  # 64@491*491 #TODO changed channels from 1 to 3
+            nn.Conv2d(input_channel, 64, 10),  # 64@491*491 #TODO changed channels from 1 to 3
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),  # 64@246*246
 
@@ -49,9 +56,9 @@ class Siamese(nn.Module):
         #  return self.sigmoid(out)
         return out
 
-
-# for test
-if __name__ == '__main__':
-    net = Siamese()
-    print(net)
-    print(list(net.parameters()))
+#
+# # for test
+# if __name__ == '__main__':
+#     net = Siamese()
+#     print(net)
+#     print(list(net.parameters()))
