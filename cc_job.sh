@@ -23,3 +23,4 @@ python3 train.py -cuda \
         -bs 8 \
         -e 50000 \
         -lr 0.00006
+
