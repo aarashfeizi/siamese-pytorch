@@ -12,7 +12,8 @@ class Metric:
     def update_acc(self, output, label):
         self.total += 1
         pred = (output >= 0)
-        batch_rights = sum(label.type(torch.int) == pred.type(torch.int)).cpu().numpy()
+        batch_rights = sum(label.type(torch.int64) == pred.type(torch.int64)).cpu().numpy()[0]
+
         self.rights += batch_rights
         self.wrongs += (label.shape[0] - batch_rights)
         print('r:', self.rights)
