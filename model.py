@@ -14,7 +14,7 @@ class Siamese(nn.Module):
             input_channel = -1  # error
 
         self.conv = nn.Sequential(
-            nn.Conv2d(input_channel, 64, 10),  # 64@491*491 #TODO changed channels from 1 to 3
+            nn.Conv2d(input_channel, 64, 10),  # 64@491*491
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),  # 64@246*246
 
