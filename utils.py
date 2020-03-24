@@ -15,7 +15,9 @@ class Metric:
         self.wrongs += (label.shape[0] - batch_rights)
 
     def get_acc(self):
-        return (self.rights) / (self.rights + self.wrongs)
+        print('rights: ', self.rights)
+        print('wrongs: ', self.wrongs)
+        return (self.rights) / (self.rights + self.wrongs) * 100
 
     def reset_acc(self):
         self.rights = 0
