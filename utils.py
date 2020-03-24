@@ -7,21 +7,26 @@ class Metric:
     def __init__(self):
         self.rights = 0
         self.wrongs = 0
+        self.total = 0
 
     def update_acc(self, output, label):
+        self.total += 1
         pred = (output >= 0)
         batch_rights = sum(label.type(torch.int) == pred.type(torch.int)).cpu().numpy()
         self.rights += batch_rights
         self.wrongs += (label.shape[0] - batch_rights)
 
+
     def get_acc(self):
         print('rights: ', self.rights)
         print('wrongs: ', self.wrongs)
-        return (self.rights) / (self.rights + self.wrongs) * 100
+        print('total = ', self.total)
+        return ((self.rights) / (self.rights + self.wrongs)) * 100
 
     def reset_acc(self):
         self.rights = 0
         self.wrongs = 0
+        self.total = 0
 
 
 
