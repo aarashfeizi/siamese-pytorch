@@ -15,12 +15,16 @@ class Metric:
         batch_rights = sum(label.type(torch.int) == pred.type(torch.int)).cpu().numpy()
         self.rights += batch_rights
         self.wrongs += (label.shape[0] - batch_rights)
-
+        print('r:', self.rights)
+        print('w:', self.wrongs)
 
     def get_acc(self):
         print('rights: ', self.rights)
         print('wrongs: ', self.wrongs)
         print('total = ', self.total)
+        print('addition: ', (self.rights + self.wrongs))
+        print('self.rights: ', self.rights)
+        print('fucking accuracy: ', ((self.rights) / (self.rights + self.wrongs)))
         return ((self.rights) / (self.rights + self.wrongs)) * 100
 
     def reset_acc(self):
