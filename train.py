@@ -76,7 +76,9 @@ if __name__ == '__main__':
     epochs = int(args.max_steps / len(trainLoader))
 
     total_batch_id = 0
+    metric = utils.Metric()
     for epoch in range(epochs):
+
         for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
             if batch_id > args.max_steps:
                 break
@@ -86,6 +88,7 @@ if __name__ == '__main__':
                 img1, img2, label = Variable(img1), Variable(img2), Variable(label)
             opt.zero_grad()
             output = net.forward(img1, img2)
+            metric.update_acc(output, label)
             loss = loss_fn(output, label)
             loss_val += loss.item()
             loss.backward()
@@ -97,9 +100,10 @@ if __name__ == '__main__':
               print('batch: ', total_batch_id)
 
             if total_batch_id % args.log_freq == 0:
-                print('epoch: %d, batch: [%d]\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
-                    epoch, total_batch_id, loss_val / args.log_freq, time.time() - time_start))
+                print('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
+                    epoch, total_batch_id, metric.get_acc(), loss_val / args.log_freq, time.time() - time_start))
                 loss_val = 0
+                metric.reset_acc()
                 time_start = time.time()
 
             if total_batch_id % args.save_freq == 0:

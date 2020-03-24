@@ -1,4 +1,26 @@
 import argparse
+import numpy as np
+import torch
+
+class Metric:
+
+    def __init__(self):
+        self.rights = 0
+        self.wrongs = 0
+
+    def update_acc(self, output, label):
+        pred = (output >= 0)
+        batch_rights = sum(label.type(torch.int) == pred.type(torch.int)).numpy()
+        self.rights += batch_rights
+        self.wrongs += (label.shape[0] - batch_rights)
+
+    def get_acc(self):
+        return (self.rights) / (self.rights + self.wrongs)
+
+    def reset_acc(self):
+        self.rights = 0
+        self.wrongs = 0
+
 
 
 def get_args():
