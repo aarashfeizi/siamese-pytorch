@@ -123,7 +123,7 @@ if __name__ == '__main__':
                         error += 1
 
                 print('*' * 70)
-                print('epoch: %d, batch: [%d]\tTest set\tcorrect:\t%d\terror:\t%d\tprecision:\t%f' % (
+                print('epoch: %d, batch: [%d]\tTest set\tcorrect:\t%d\terror:\t%d\taccuracy:\t%f' % (
                     epoch, total_batch_id, right, error, right * 1.0 / (right + error)))
                 print('*' * 70)
                 queue.append(right * 1.0 / (right + error))
