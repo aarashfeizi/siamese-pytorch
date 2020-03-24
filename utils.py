@@ -1,5 +1,4 @@
 import argparse
-import numpy as np
 import torch
 
 class Metric:
@@ -7,31 +6,20 @@ class Metric:
     def __init__(self):
         self.rights = 0
         self.wrongs = 0
-        self.total = 0
 
     def update_acc(self, output, label):
-        self.total += 1
         pred = (output >= 0)
         batch_rights = sum(label.type(torch.int64) == pred.type(torch.int64)).cpu().numpy()[0]
 
         self.rights += batch_rights
         self.wrongs += (label.shape[0] - batch_rights)
-        print('r:', self.rights)
-        print('w:', self.wrongs)
 
     def get_acc(self):
-        print('rights: ', self.rights)
-        print('wrongs: ', self.wrongs)
-        print('total = ', self.total)
-        print('addition: ', (self.rights + self.wrongs))
-        print('self.rights: ', self.rights)
-        print('fucking accuracy: ', ((self.rights) / (self.rights + self.wrongs)))
         return ((self.rights) / (self.rights + self.wrongs)) * 100
 
     def reset_acc(self):
         self.rights = 0
         self.wrongs = 0
-        self.total = 0
 
 
 
