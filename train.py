@@ -45,7 +45,7 @@ if __name__ == '__main__':
     else:
         print('Fuck: ', args.dataset_name)
 
-    print(args.way)
+    print('way:', args.way)
 
     testLoader = DataLoader(testSet, batch_size=args.way, shuffle=False, num_workers=args.workers)
 
@@ -73,7 +73,8 @@ if __name__ == '__main__':
 
     print('steps:', args.max_steps)
 
-    epochs = int(args.max_steps / len(trainLoader))
+    epochs = int(np.ceil(args.max_steps / len(trainLoader)))
+    print('epochs: ', epochs)
 
     total_batch_id = 0
     metric = utils.Metric()
