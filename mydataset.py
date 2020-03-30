@@ -1,3 +1,4 @@
+import json
 import os
 import random
 
@@ -9,39 +10,64 @@ from torch.utils.data import Dataset
 RESHAPE_SIZE = (105, 105)
 
 
-def loadCUBToMem(dataPath, subPath, isTrain=True):
-    isTrain = int(isTrain)  # True: 1, False: 0
-    if subPath is not None:
-        imagePath = os.path.join(dataPath, subPath)
-    else:
-        imagePath = dataPath
+def loadCUBToMem(dataPath, dataset_name, isTrain=True):
+    if dataset_name == 'cub':
+        dataset_path = os.path.join(dataPath, 'CUB')
     print("begin loading dataset to memory")
     datas = {}
 
-    with open(os.path.join(dataPath, 'train_test_split.txt'), 'r') as f:  # TODO
-        train_test_split = np.array(list(map(lambda x: x.split(), f.read().split('\n')[:-1])), dtype=int)
+    with open(os.path.join(dataset_path, 'base.json'), 'r') as f:
+        base_dict = json.load(f)
+    with open(os.path.join(dataset_path, 'val.json'), 'r') as f:
+        val_dict = json.load(f)
+    with open(os.path.join(dataset_path, 'novel.json'), 'r') as f:
+        novel_dict = json.load(f)
 
-    with open(os.path.join(dataPath, 'images.txt'), 'r') as f:
-        idx2path = dict(list(map(lambda x: x.split(), f.read().split('\n')[:-1])))
+    image_labels = []
+    image_path = []
 
-    data_idx = train_test_split[train_test_split[:, 1] == isTrain]
-    num_instances = data_idx.shape[0]
+    if isTrain:  # train + val
+        image_labels.extend(base_dict['image_labels'])
+        image_labels.extend(val_dict['image_labels'])
 
-    num_classes = 1
-    for idx in data_idx:
-        path = idx2path[str(idx[0])]
-        filePath = os.path.join(imagePath, path)
-        data_class = int(path[0:3]) - 1
-        if data_class not in datas.keys():
-            datas[data_class] = []
+        image_path.extend(base_dict['image_names'])
+        image_path.extend(val_dict['image_names'])
 
-        datas[data_class].append(filePath)
+    else:  # novel classes
+        image_labels.extend(novel_dict['image_labels'])
 
-    if num_classes < data_class + 1:
-        num_classes = data_class + 1
+        image_path.extend(novel_dict['image_names'])
+
+
+    num_instances = len(image_labels)
+
+    num_classes = len(np.unique(image_labels))
+
+    for idx, path in zip(image_labels, image_path):
+        if idx not in datas.keys():
+            datas[idx] = []
+        datas[idx].append(os.path.join(dataPath, path))
+
+    labels = np.unique(image_labels)
+    #
+    # num_classes = 1
+    # for idx in data_idx:
+    #     path = idx2path[str(idx[0])]
+    #     filePath = os.path.join(imagePath, path)
+    #     data_class = int(path[0:3]) - 1
+    #     if data_class not in datas.keys():
+    #         datas[data_class] = []
+    #
+    #     datas[data_class].append(filePath)
+    #
+    # if num_classes < data_class + 1:
+    #     num_classes = data_class + 1
+
+    # import pdb
+    # pdb.set_trace()
 
     print("finish loading dataset to memory")
-    return datas, num_classes, num_instances
+    return datas, num_classes, num_instances, labels
 
 
 class CUBTrain(Dataset):
@@ -51,7 +77,7 @@ class CUBTrain(Dataset):
         np.random.seed(args.seed)
         # self.dataset = dataset
         self.transform = transform
-        self.datas, self.num_classes, self.length = loadCUBToMem(args.dataset_path, args.subdir_path, isTrain=True)
+        self.datas, self.num_classes, self.length,  self.labels = loadCUBToMem(args.dataset_path, args.dataset_name, isTrain=True)
 
     def __len__(self):
         return self.length
@@ -65,17 +91,23 @@ class CUBTrain(Dataset):
         if index % 2 == 1:
             label = 1.0
             idx1 = random.randint(0, self.num_classes - 1)
-            image1 = Image.open(random.choice(self.datas[idx1]))
-            image2 = Image.open(random.choice(self.datas[idx1]))
+            class1 = self.labels[idx1]
+            image1 = Image.open(random.choice(self.datas[class1]))
+            image2 = Image.open(random.choice(self.datas[class1]))
         # get image from different class
         else:
             label = 0.0
             idx1 = random.randint(0, self.num_classes - 1)
             idx2 = random.randint(0, self.num_classes - 1)
+
             while idx1 == idx2:
                 idx2 = random.randint(0, self.num_classes - 1)
-            image1 = Image.open(random.choice(self.datas[idx1]))
-            image2 = Image.open(random.choice(self.datas[idx2]))
+
+            class1 = self.labels[idx1]
+            class2 = self.labels[idx2]
+
+            image1 = Image.open(random.choice(self.datas[class1]))
+            image2 = Image.open(random.choice(self.datas[class2]))
 
         image1 = image1.resize(RESHAPE_SIZE).convert('RGB')
         image2 = image2.resize(RESHAPE_SIZE).convert('RGB')
@@ -96,7 +128,7 @@ class CUBTest(Dataset):
         self.way = args.way
         self.img1 = None
         self.c1 = None
-        self.datas, self.num_classes, _ = loadCUBToMem(args.dataset_path, args.subdir_path, isTrain=False)
+        self.datas, self.num_classes, _, self.labels = loadCUBToMem(args.dataset_path, args.dataset_name, isTrain=False)
 
     def __len__(self):
         return self.times * self.way
@@ -106,14 +138,14 @@ class CUBTest(Dataset):
         label = None
         # generate image pair from same class
         if idx == 0:
-            self.c1 = random.randint(0, self.num_classes - 1)
+            self.c1 = self.labels[random.randint(0, self.num_classes - 1)]
             self.img1 = Image.open(random.choice(self.datas[self.c1])).resize(RESHAPE_SIZE).convert('RGB')
             img2 = Image.open(random.choice(self.datas[self.c1])).resize(RESHAPE_SIZE).convert('RGB')
         # generate image pair from different class
         else:
-            c2 = random.randint(0, self.num_classes - 1)
+            c2 = self.labels[random.randint(0, self.num_classes - 1)]
             while self.c1 == c2:
-                c2 = random.randint(0, self.num_classes - 1)
+                c2 = self.labels[random.randint(0, self.num_classes - 1)]
             img2 = Image.open(random.choice(self.datas[c2])).resize(RESHAPE_SIZE).convert('RGB')
 
         if self.transform:
@@ -254,8 +286,8 @@ class OmniglotTest(Dataset):
             img2 = self.transform(img2)
         return img1, img2
 
-
-# test
-if __name__ == '__main__':
-    omniglotTrain = OmniglotTrain('./images_background', 30000 * 8)
-    print(omniglotTrain)
+#
+# # test
+# if __name__ == '__main__':
+#     omniglotTrain = OmniglotTrain('./images_background', 30000 * 8)
+#     print(omniglotTrain)

@@ -69,7 +69,7 @@ if __name__ == '__main__':
     train_loss = []
     loss_val = 0
     time_start = time.time()
-    queue = deque()
+    queue = deque(maxlen=20)
 
     print('steps:', args.max_steps)
 
