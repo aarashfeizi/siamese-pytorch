@@ -6,9 +6,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-
-RESHAPE_SIZE = (105, 105)
-
+from torchvision.transforms import transforms
 
 def loadCUBToMem(dataPath, dataset_name, isTrain=True):
     if dataset_name == 'cub':
@@ -109,8 +107,8 @@ class CUBTrain(Dataset):
             image1 = Image.open(random.choice(self.datas[class1]))
             image2 = Image.open(random.choice(self.datas[class2]))
 
-        image1 = image1.resize(RESHAPE_SIZE).convert('RGB')
-        image2 = image2.resize(RESHAPE_SIZE).convert('RGB')
+        image1 = image1.convert('RGB')
+        image2 = image2.convert('RGB')
 
         if self.transform:
             image1 = self.transform(image1)
@@ -139,14 +137,14 @@ class CUBTest(Dataset):
         # generate image pair from same class
         if idx == 0:
             self.c1 = self.labels[random.randint(0, self.num_classes - 1)]
-            self.img1 = Image.open(random.choice(self.datas[self.c1])).resize(RESHAPE_SIZE).convert('RGB')
-            img2 = Image.open(random.choice(self.datas[self.c1])).resize(RESHAPE_SIZE).convert('RGB')
+            self.img1 = Image.open(random.choice(self.datas[self.c1])).convert('RGB')
+            img2 = Image.open(random.choice(self.datas[self.c1])).convert('RGB')
         # generate image pair from different class
         else:
             c2 = self.labels[random.randint(0, self.num_classes - 1)]
             while self.c1 == c2:
                 c2 = self.labels[random.randint(0, self.num_classes - 1)]
-            img2 = Image.open(random.choice(self.datas[c2])).resize(RESHAPE_SIZE).convert('RGB')
+            img2 = Image.open(random.choice(self.datas[c2])).convert('RGB')
 
         if self.transform:
             img1 = self.transform(self.img1)

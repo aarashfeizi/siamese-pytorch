@@ -1,6 +1,44 @@
 import argparse
 
 import torch
+from torchvision.transforms import transforms
+
+
+class TransformLoader:
+    def __init__(self, image_size,
+                 normalize_param=dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                 jitter_param=dict(Brightness=0.4, Contrast=0.4, Color=0.4)):
+        self.image_size = image_size
+        self.normalize_param = normalize_param
+        self.jitter_param = jitter_param
+
+    def parse_transform(self, transform_type):
+        # if transform_type == 'ImageJitter':
+        #     method = add_transforms.ImageJitter(self.jitter_param)
+        #     return method
+        method = getattr(transforms, transform_type)
+        if transform_type == 'RandomSizedCrop':
+            return method(self.image_size)
+        elif transform_type == 'CenterCrop':
+            return method(self.image_size)
+        elif transform_type == 'Scale':
+            return method([int(self.image_size * 1.15), int(self.image_size * 1.15)])
+        elif transform_type == 'Normalize':
+            return method(**self.normalize_param)
+        else:
+            return method()
+
+    def get_composed_transform(self, aug=False):
+        if aug:
+            transform_list = ['RandomSizedCrop', 'ImageJitter', 'RandomHorizontalFlip', 'ToTensor', 'Normalize']
+        else:
+            transform_list = ['Scale', 'CenterCrop', 'ToTensor', 'Normalize']
+
+        transform_funcs = [self.parse_transform(x) for x in transform_list]
+        transform = transforms.Compose(transform_funcs)
+        return transform
+
+
 
 
 class Metric:
@@ -40,6 +78,7 @@ def get_args():
     parser.add_argument('-trp', '--train_path', default='./omniglot/python/images_background')
     parser.add_argument('-tsp', '--test_path', default='./omniglot/python/images_evaluation')
     parser.add_argument('-sp', '--save_path', default='models/', help="path to store model")
+    parser.add_argument('-a', '--aug', default=False, action='store_true')
 
     parser.add_argument('-s', '--seed', default=402, type=int, help="random seed")
     parser.add_argument('-w', '--way', default=20, type=int, help="how much way one-shot learning")

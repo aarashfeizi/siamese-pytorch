@@ -6,12 +6,14 @@ class Siamese(nn.Module):
 
     def __init__(self, args):
         super(Siamese, self).__init__()
-        if args.dataset_name == 'cub':
+        if args.dataset_name == 'cub': #  84 * 84
             input_channel = 3
+            last_layer = 2304
         elif args.dataset_name == 'omniglot':
             input_channel = 1
+            last_layer = 9216
         else:
-            input_channel = -1  # error
+            raise Exception('Dataset not supported')
 
         self.conv = nn.Sequential(
             nn.Conv2d(input_channel, 64, 10),  # 64@491*491
@@ -38,7 +40,7 @@ class Siamese(nn.Module):
             # nn.ReLU(),  # 512@10*10
             # nn.MaxPool2d(2),  # 512@5*5
         )
-        self.linear = nn.Sequential(nn.Linear(9216, 4096), nn.Sigmoid())  #TODO
+        self.linear = nn.Sequential(nn.Linear(last_layer, 4096), nn.Sigmoid())  #TODO
         # self.linear = nn.Sequential(nn.Linear(8192, 4096), nn.Sigmoid())  # 512 * 4 * 4 input
         self.out = nn.Linear(4096, 1)
 

@@ -14,6 +14,7 @@ import utils
 from model import Siamese
 from mydataset import OmniglotTrain, OmniglotTest, CUBTrain, CUBTest
 
+
 if __name__ == '__main__':
 
     args = utils.get_args()
@@ -21,10 +22,14 @@ if __name__ == '__main__':
     random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    data_transforms = transforms.Compose([
-        transforms.RandomAffine(15),
-        transforms.ToTensor()
-    ])
+    image_size = -1
+
+    if args.dataset_name == 'cub':
+        image_size = 84
+    elif args.dataset_name == 'omniglot':
+        image_size = 105
+
+    data_transforms = utils.TransformLoader(image_size).get_composed_transform(aug=args.aug)
 
     # train_dataset = dset.ImageFolder(root=Flags.train_path)
     # test_dataset = dset.ImageFolder(root=Flags.test_path)
@@ -38,7 +43,7 @@ if __name__ == '__main__':
 
     if args.dataset_name == 'cub':
         trainSet = CUBTrain(args, transform=data_transforms)
-        testSet = CUBTest(args, transform=transforms.ToTensor())
+        testSet = CUBTest(args, transform=data_transforms)
     elif args.dataset_name == 'omniglot':
         trainSet = OmniglotTrain(args, transform=data_transforms)
         testSet = OmniglotTest(args, transform=transforms.ToTensor())
