@@ -8,7 +8,8 @@ class Siamese(nn.Module):
         super(Siamese, self).__init__()
         if args.dataset_name == 'cub': #  84 * 84
             input_channel = 3
-            last_layer = 2304
+            # last_layer = 2304
+            last_layer = 9216
         elif args.dataset_name == 'omniglot':
             input_channel = 1
             last_layer = 9216

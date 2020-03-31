@@ -25,11 +25,17 @@ if __name__ == '__main__':
     image_size = -1
 
     if args.dataset_name == 'cub':
-        image_size = 84
+        image_size = 105
     elif args.dataset_name == 'omniglot':
         image_size = 105
 
-    data_transforms = utils.TransformLoader(image_size).get_composed_transform(aug=args.aug)
+    # data_transforms = utils.TransformLoader(image_size).get_composed_transform(aug=args.aug)
+
+    data_transforms = transforms.Compose([
+        transforms.Resize([int(image_size), int(image_size)]),
+        transforms.RandomAffine(15),
+        transforms.ToTensor()
+    ])
 
     # train_dataset = dset.ImageFolder(root=Flags.train_path)
     # test_dataset = dset.ImageFolder(root=Flags.test_path)
