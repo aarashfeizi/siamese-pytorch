@@ -12,7 +12,7 @@ from torchvision import transforms
 
 import utils
 from model import Siamese
-from mydataset import OmniglotTrain, OmniglotTest, CUBTrain, CUBTest
+from dataloader import *
 
 
 if __name__ == '__main__':
@@ -28,8 +28,10 @@ if __name__ == '__main__':
         image_size = 84
     elif args.dataset_name == 'omniglot':
         image_size = 105
+    elif args.dataset_name == 'hotels':
+        image_size = 300
 
-    data_transforms = utils.TransformLoader(image_size).get_composed_transform(aug=args.aug)
+    data_transforms = utils.TransformLoader(image_size, rotate=args.rotate).get_composed_transform(aug=args.aug)
 
     # data_transforms = transforms.Compose([
     #     transforms.Resize([int(image_size), int(image_size)]),
@@ -53,6 +55,9 @@ if __name__ == '__main__':
     elif args.dataset_name == 'omniglot':
         trainSet = OmniglotTrain(args, transform=data_transforms)
         testSet = OmniglotTest(args, transform=transforms.ToTensor())
+    elif args.dataset_name == 'hotels':
+        trainSet = HotelTrain(args, transform=data_transforms)
+        testSet = HotelTest(args, transform=data_transforms)
     else:
         print('Fuck: ', args.dataset_name)
 

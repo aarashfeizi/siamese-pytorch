@@ -3,10 +3,11 @@ import os
 import random
 
 import numpy as np
+import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from torchvision.transforms import transforms
+
 
 def loadCUBToMem(dataPath, dataset_name, isTrain=True):
     if dataset_name == 'cub':
@@ -36,7 +37,6 @@ def loadCUBToMem(dataPath, dataset_name, isTrain=True):
 
         image_path.extend(novel_dict['image_names'])
 
-
     num_instances = len(image_labels)
 
     num_classes = len(np.unique(image_labels))
@@ -47,22 +47,6 @@ def loadCUBToMem(dataPath, dataset_name, isTrain=True):
         datas[idx].append(os.path.join(dataPath, path))
 
     labels = np.unique(image_labels)
-    #
-    # num_classes = 1
-    # for idx in data_idx:
-    #     path = idx2path[str(idx[0])]
-    #     filePath = os.path.join(imagePath, path)
-    #     data_class = int(path[0:3]) - 1
-    #     if data_class not in datas.keys():
-    #         datas[data_class] = []
-    #
-    #     datas[data_class].append(filePath)
-    #
-    # if num_classes < data_class + 1:
-    #     num_classes = data_class + 1
-
-    # import pdb
-    # pdb.set_trace()
 
     print("finish loading dataset to memory")
     return datas, num_classes, num_instances, labels
@@ -75,7 +59,8 @@ class CUBTrain(Dataset):
         np.random.seed(args.seed)
         # self.dataset = dataset
         self.transform = transform
-        self.datas, self.num_classes, self.length,  self.labels = loadCUBToMem(args.dataset_path, args.dataset_name, isTrain=True)
+        self.datas, self.num_classes, self.length, self.labels = loadCUBToMem(args.dataset_path, args.dataset_name,
+                                                                              isTrain=True)
 
     def __len__(self):
         return self.length
@@ -284,8 +269,117 @@ class OmniglotTest(Dataset):
             img2 = self.transform(img2)
         return img1, img2
 
-#
-# # test
-# if __name__ == '__main__':
-#     omniglotTrain = OmniglotTrain('./images_background', 30000 * 8)
-#     print(omniglotTrain)
+
+def loadHotels(dataset_path, dataset_name, mode='train'):
+
+    if dataset_name == 'hotels':
+        dataset_path = os.path.join(dataset_path, 'hotels50k')
+
+    with open(os.path.join(dataset_path, 'hotel50-image_label.csv')) as f:
+        hotels = pd.read_csv(f)
+    with open(os.path.join(dataset_path, 'background_or_novel.csv')) as f:
+        b_or_n = pd.read_csv(f)
+
+    train = (mode == 'train')
+
+    if train:
+        label_list = list(b_or_n[b_or_n['background'] == 0]['label'])  # for background classes
+    else:
+        label_list = list(b_or_n[b_or_n['background'] == 1]['label'])  # for novel classses
+
+    datas = {}
+    length = 0
+    for idx, row in hotels.iterrows():
+        if row['hotel_label'] in label_list:
+            lbl = row['hotel_label']
+            if lbl not in datas.keys():
+                datas[lbl] = []
+            datas[lbl].append(os.path.join(dataset_path, row['image']))
+
+    for _, value in datas.items():
+        length += len(value)
+
+    return datas, len(label_list), length, label_list
+
+
+class HotelTrain(Dataset):
+    def __init__(self, args, transform=None):
+        super(HotelTrain, self).__init__()
+        np.random.seed(args.seed)
+        self.transform = transform
+        self.datas, self.num_classes, self.length, self.labels = loadHotels(args.dataset_path, args.dataset_name,
+                                                                            mode='train')
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, index):
+        # image1 = random.choice(self.dataset.imgs)
+        label = None
+        img1 = None
+        img2 = None
+        # get image from same class
+        if index % 2 == 1:
+            label = 1.0
+            idx1 = random.randint(0, self.num_classes - 1)
+            class1 = self.labels[idx1]
+            image1 = Image.open(random.choice(self.datas[class1]))
+            image2 = Image.open(random.choice(self.datas[class1]))
+        # get image from different class
+        else:
+            label = 0.0
+            idx1 = random.randint(0, self.num_classes - 1)
+            idx2 = random.randint(0, self.num_classes - 1)
+
+            while idx1 == idx2:
+                idx2 = random.randint(0, self.num_classes - 1)
+
+            class1 = self.labels[idx1]
+            class2 = self.labels[idx2]
+
+            image1 = Image.open(random.choice(self.datas[class1]))
+            image2 = Image.open(random.choice(self.datas[class2]))
+
+        image1 = image1.convert('RGB')
+        image2 = image2.convert('RGB')
+
+        if self.transform:
+            image1 = self.transform(image1)
+            image2 = self.transform(image2)
+        return image1, image2, torch.from_numpy(np.array([label], dtype=np.float32))
+
+
+class HotelTest(Dataset):
+
+    def __init__(self, args, transform=None):
+        np.random.seed(args.seed)
+        super(HotelTest, self).__init__()
+        self.transform = transform
+        self.times = args.times
+        self.way = args.way
+        self.img1 = None
+        self.c1 = None
+        self.datas, self.num_classes, _, self.labels = loadHotels(args.dataset_path, args.dataset_name, mode='test')
+
+    def __len__(self):
+        return self.times * self.way
+
+    def __getitem__(self, index):
+        idx = index % self.way
+        label = None
+        # generate image pair from same class
+        if idx == 0:
+            self.c1 = self.labels[random.randint(0, self.num_classes - 1)]
+            self.img1 = Image.open(random.choice(self.datas[self.c1])).convert('RGB')
+            img2 = Image.open(random.choice(self.datas[self.c1])).convert('RGB')
+        # generate image pair from different class
+        else:
+            c2 = self.labels[random.randint(0, self.num_classes - 1)]
+            while self.c1 == c2:
+                c2 = self.labels[random.randint(0, self.num_classes - 1)]
+            img2 = Image.open(random.choice(self.datas[c2])).convert('RGB')
+
+        if self.transform:
+            img1 = self.transform(self.img1)
+            img2 = self.transform(img2)
+        return img1, img2
