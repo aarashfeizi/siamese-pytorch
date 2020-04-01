@@ -283,9 +283,9 @@ def loadHotels(dataset_path, dataset_name, mode='train'):
     train = (mode == 'train')
 
     if train:
-        label_list = list(b_or_n[b_or_n['background'] == 0]['label'])  # for background classes
+        label_list = list(b_or_n[b_or_n['background'] == 1]['label'])  # for background classes
     else:
-        label_list = list(b_or_n[b_or_n['background'] == 1]['label'])  # for novel classses
+        label_list = list(b_or_n[b_or_n['background'] == 0]['label'])  # for novel classses
 
     datas = {}
     length = 0

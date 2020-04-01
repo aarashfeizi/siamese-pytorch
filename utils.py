@@ -99,6 +99,9 @@ def get_args():
     parser.add_argument('-2cf', '--second_conv_filter', default=7, type=int, help="")
     parser.add_argument('-3cf', '--third_conv_filter', default=4, type=int, help="")
     parser.add_argument('-4cf', '--fourth_conv_filter', default=4, type=int, help="")
+    parser.add_argument('-5cf', '--fifth_conv_filter', default=3, type=int, help="")
+    parser.add_argument('-6cf', '--sixth_conv_filter', default=3, type=int, help="")
+    parser.add_argument('-7cf', '--seventh_conv_filter', default=3, type=int, help="")
     parser.add_argument('-co', '--conv_output', default=2304, type=int, help="")
     parser.add_argument('-ll', '--last_layer', default=4096, type=int, help="number of last layer neurons.")
 
