@@ -273,7 +273,7 @@ class OmniglotTest(Dataset):
 def loadHotels(dataset_path, dataset_name, mode='train'):
 
     if dataset_name == 'hotels':
-        dataset_path = os.path.join(dataset_path, 'hotels50k')
+        dataset_path = os.path.join(dataset_path, 'hotels')
 
     with open(os.path.join(dataset_path, 'hotel50-image_label.csv')) as f:
         hotels = pd.read_csv(f)
