@@ -14,6 +14,10 @@ class Siamese(nn.Module):
             input_channel = 1
             self.linear = nn.Sequential(nn.Linear(9216, args.last_layer), nn.Sigmoid())
             self.out = nn.Linear(args.last_layer, 1)
+        elif args.dataset_name == 'hotels':
+            input_channel = 3
+            self.linear = nn.Sequential(nn.Linear(9216, args.last_layer), nn.Sigmoid())
+            self.out = nn.Linear(args.last_layer, 1)
         else:
             raise Exception('Dataset not supported')
 

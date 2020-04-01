@@ -309,6 +309,8 @@ class HotelTrain(Dataset):
         self.transform = transform
         self.datas, self.num_classes, self.length, self.labels = loadHotels(args.dataset_path, args.dataset_name,
                                                                             mode='train')
+        print('hotel train classes: ', self.num_classes)
+        print('hotel train length: ', self.length)
 
     def __len__(self):
         return self.length
@@ -360,6 +362,10 @@ class HotelTest(Dataset):
         self.img1 = None
         self.c1 = None
         self.datas, self.num_classes, _, self.labels = loadHotels(args.dataset_path, args.dataset_name, mode='test')
+
+
+        print('hotel test classes: ', self.num_classes)
+        print('hotel test length: ', self.__len__())
 
     def __len__(self):
         return self.times * self.way
