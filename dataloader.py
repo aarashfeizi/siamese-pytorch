@@ -9,32 +9,34 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 
-def loadCUBToMem(dataPath, dataset_name, isTrain=True):
+def loadCUBToMem(dataPath, dataset_name, mode='train'):
     if dataset_name == 'cub':
         dataset_path = os.path.join(dataPath, 'CUB')
     print("begin loading dataset to memory")
     datas = {}
 
-    with open(os.path.join(dataset_path, 'base.json'), 'r') as f:
-        base_dict = json.load(f)
-    with open(os.path.join(dataset_path, 'val.json'), 'r') as f:
-        val_dict = json.load(f)
-    with open(os.path.join(dataset_path, 'novel.json'), 'r') as f:
-        novel_dict = json.load(f)
-
     image_labels = []
     image_path = []
 
-    if isTrain:  # train + val
-        image_labels.extend(base_dict['image_labels'])
-        image_labels.extend(val_dict['image_labels'])
+    if mode == 'train':  # train
 
+        with open(os.path.join(dataset_path, 'base.json'), 'r') as f:
+            base_dict = json.load(f)
+        image_labels.extend(base_dict['image_labels'])
         image_path.extend(base_dict['image_names'])
+
+    elif mode == 'val':  # val
+
+        with open(os.path.join(dataset_path, 'val.json'), 'r') as f:
+            val_dict = json.load(f)
+        image_labels.extend(val_dict['image_labels'])
         image_path.extend(val_dict['image_names'])
 
-    else:  # novel classes
-        image_labels.extend(novel_dict['image_labels'])
+    elif mode == 'test':  # novel classes
 
+        with open(os.path.join(dataset_path, 'novel.json'), 'r') as f:
+            novel_dict = json.load(f)
+        image_labels.extend(novel_dict['image_labels'])
         image_path.extend(novel_dict['image_names'])
 
     num_instances = len(image_labels)
@@ -60,7 +62,7 @@ class CUBTrain(Dataset):
         # self.dataset = dataset
         self.transform = transform
         self.datas, self.num_classes, self.length, self.labels = loadCUBToMem(args.dataset_path, args.dataset_name,
-                                                                              isTrain=True)
+                                                                              mode='train')
 
     def __len__(self):
         return self.length
@@ -103,7 +105,7 @@ class CUBTrain(Dataset):
 
 class CUBTest(Dataset):
 
-    def __init__(self, args, transform=None):
+    def __init__(self, args, transform=None, mode='test'):
         np.random.seed(args.seed)
         super(CUBTest, self).__init__()
         self.transform = transform
@@ -111,7 +113,7 @@ class CUBTest(Dataset):
         self.way = args.way
         self.img1 = None
         self.c1 = None
-        self.datas, self.num_classes, _, self.labels = loadCUBToMem(args.dataset_path, args.dataset_name, isTrain=False)
+        self.datas, self.num_classes, _, self.labels = loadCUBToMem(args.dataset_path, args.dataset_name, mode=mode)
 
     def __len__(self):
         return self.times * self.way
@@ -271,7 +273,6 @@ class OmniglotTest(Dataset):
 
 
 def loadHotels(dataset_path, dataset_name, mode='train'):
-
     if dataset_name == 'hotels':
         dataset_path = os.path.join(dataset_path, 'hotels')
 
@@ -362,7 +363,6 @@ class HotelTest(Dataset):
         self.img1 = None
         self.c1 = None
         self.datas, self.num_classes, _, self.labels = loadHotels(args.dataset_path, args.dataset_name, mode='test')
-
 
         print('hotel test classes: ', self.num_classes)
         print('hotel test length: ', self.__len__())

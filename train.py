@@ -1,21 +1,26 @@
-import os
+import logging
 import pickle
-import random
+import sys
 import time
 from collections import deque
 
-import numpy as np
-import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from tqdm import tqdm
 
 import utils
-from model import Siamese
 from dataloader import *
+from model import Siamese
 
 
-if __name__ == '__main__':
+def _logger():
+    logging.basicConfig(format='%(message)s', stream=sys.stdout, level=logging.INFO)
+    return logging.getLogger()
+
+
+def main():
+    logger = _logger()
 
     args = utils.get_args()
 
@@ -48,15 +53,19 @@ if __name__ == '__main__':
 
     trainSet = None
     testSet = None
+    valSet = None
 
     if args.dataset_name == 'cub':
         trainSet = CUBTrain(args, transform=data_transforms)
+        valSet = CUBTest(args, transform=data_transforms, mode='val')
         testSet = CUBTest(args, transform=data_transforms)
     elif args.dataset_name == 'omniglot':
         trainSet = OmniglotTrain(args, transform=data_transforms)
+        # valSet = CUBTest(args, transform=data_transforms, mode='val')
         testSet = OmniglotTest(args, transform=transforms.ToTensor())
     elif args.dataset_name == 'hotels':
         trainSet = HotelTrain(args, transform=data_transforms)
+        # valSet = CUBTest(args, transform=data_transforms, mode='val')
         testSet = HotelTest(args, transform=data_transforms)
     else:
         print('Fuck: ', args.dataset_name)
@@ -64,6 +73,9 @@ if __name__ == '__main__':
     print('way:', args.way)
 
     testLoader = DataLoader(testSet, batch_size=args.way, shuffle=False, num_workers=args.workers)
+
+    if valSet is not None:
+        valLoader = DataLoader(valSet, batch_size=args.way, shuffle=False, num_workers=args.workers)
 
     trainLoader = DataLoader(trainSet, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
 
@@ -82,73 +94,112 @@ if __name__ == '__main__':
     opt = torch.optim.Adam(net.parameters(), lr=args.lr)
     opt.zero_grad()
 
-    train_loss = []
-    loss_val = 0
+    train_losses = []
     time_start = time.time()
     queue = deque(maxlen=20)
 
-    print('steps:', args.max_steps)
+    # print('steps:', args.max_steps)
 
-    epochs = int(np.ceil(args.max_steps / len(trainLoader)))
+    # epochs = int(np.ceil(args.max_steps / len(trainLoader)))
+    epochs = args.epochs
     print('epochs: ', epochs)
 
     total_batch_id = 0
     metric = utils.Metric()
+
+    max_val_acc = 0
+
     for epoch in range(epochs):
 
-        for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
-            if batch_id > args.max_steps:
-                break
-            if args.cuda:
-                img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
-            else:
-                img1, img2, label = Variable(img1), Variable(img2), Variable(label)
-            opt.zero_grad()
-            output = net.forward(img1, img2)
-            metric.update_acc(output, label)
-            loss = loss_fn(output, label)
-            loss_val += loss.item()
-            loss.backward()
+        train_loss = 0
 
-            opt.step()
-            total_batch_id += 1
+        with tqdm(total=len(trainLoader), desc=f'Epoch {epoch + 1}/{args.epochs}') as t:
+            for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
+                if args.cuda:
+                    img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
+                else:
+                    img1, img2, label = Variable(img1), Variable(img2), Variable(label)
 
-            if total_batch_id % 100 == 0:
-              print('batch: ', total_batch_id)
+                opt.zero_grad()
 
-            if total_batch_id % args.log_freq == 0:
-                print('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
-                    epoch, total_batch_id, metric.get_acc(), loss_val / args.log_freq, time.time() - time_start))
-                loss_val = 0
-                metric.reset_acc()
-                time_start = time.time()
+                output = net.forward(img1, img2)
+                metric.update_acc(output, label)
+                loss = loss_fn(output, label)
 
-            if total_batch_id % args.save_freq == 0:
-                torch.save(net.state_dict(), args.save_path + '/model-inter-' + str(batch_id + 1) + ".pt")
+                train_loss += loss.item()
+                loss.backward()
 
-            if total_batch_id % args.test_freq == 0:
-                right, error = 0, 0
-                for _, (test1, test2) in enumerate(testLoader, 1):
+                opt.step()
+                total_batch_id += 1
+                t.set_postfix(loss=f'{train_loss / batch_id:.4f}')
+                t.set_postfix(train_acc=f'{metric.get_acc():.4f}')
+
+                if total_batch_id % args.log_freq == 0:
+                    print('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
+                        epoch, batch_id, metric.get_acc(), train_loss / args.log_freq, time.time() - time_start))
+                    train_loss = 0
+                    metric.reset_acc()
+                    time_start = time.time()
+
+                if total_batch_id % args.test_freq == 0:
+
+                    right, error = 0, 0
+                    val_label = np.zeros(shape=args.way, dtype=np.float32)
+                    val_label[0] = 1
+                    val_label = torch.from_numpy(val_label).reshape((args.way, 1))
+
                     if args.cuda:
-                        test1, test2 = test1.cuda(), test2.cuda()
-                    test1, test2 = Variable(test1), Variable(test2)
-                    output = net.forward(test1, test2).data.cpu().numpy()
-                    pred = np.argmax(output)
-                    if pred == 0:
-                        right += 1
+                        val_label = Variable(val_label.cuda())
                     else:
-                        error += 1
+                        val_label = Variable(val_label)
 
-                print('*' * 70)
-                print('epoch: %d, batch: [%d]\tTest set\tcorrect:\t%d\terror:\t%d\taccuracy:\t%f' % (
-                    epoch, total_batch_id, right, error, right * 1.0 / (right + error)))
-                print('*' * 70)
-                queue.append(right * 1.0 / (right + error))
-            train_loss.append(loss_val)
+                    if valSet is not None:
+                        loader = valLoader
+                    else:
+                        loader = testLoader
+
+                    for _, (test1, test2) in enumerate(loader, 1):
+                        if args.cuda:
+                            test1, test2 = test1.cuda(), test2.cuda()
+                        test1, test2 = Variable(test1), Variable(test2)
+                        output = net.forward(test1, test2)
+                        val_loss = loss_fn(output, val_label)
+                        output = output.data.cpu().numpy()
+                        pred = np.argmax(output)
+                        if pred == 0:
+                            right += 1
+                        else:
+                            error += 1
+
+                        if np.random.random() < 0.1:
+                            print('right: ', right)
+                            print('error: ', error)
+
+                    val_acc = right * 1.0 / (right + error)
+                    logger.info('*' * 70)
+                    t.set_postfix(val_acc=f'{val_acc:.4f}')
+                    logger.info(
+                        'epoch: %d, batch: [%d]\tVal set\tcorrect:\t%d\terror:\t%d\tval_acc:%f\tval_loss:\t%f' % (
+                            epoch, batch_id, right, error, val_acc, val_loss))
+                    logger.info('*' * 70)
+
+                    if val_acc > max_val_acc == 0:
+                        logger.info(
+                            'saving model... current val acc: [%f], previous val acc [%f]' % (val_acc, max_val_acc))
+                        max_val_acc = val_acc
+                        torch.save(net.state_dict(),
+                                   args.save_path + '/model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(
+                                       val_acc) + '.pt')
+
+                    queue.append(right * 1.0 / (right + error))
+                train_losses.append(train_loss)
+
+                t.update()
+
         #  learning_rate = learning_rate * 0.95
 
-    with open('train_loss', 'wb') as f:
-        pickle.dump(train_loss, f)
+    with open('train_losses', 'wb') as f:
+        pickle.dump(train_losses, f)
 
     acc = 0.0
     for d in queue:
@@ -156,3 +207,7 @@ if __name__ == '__main__':
     print("#" * 70)
     print('queue len: ', len(queue))
     print("final accuracy: ", acc / len(queue))
+
+
+if __name__ == '__main__':
+    main()

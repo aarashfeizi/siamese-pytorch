@@ -1,11 +1,13 @@
 import argparse
 
 import torch
+from torch.autograd import Variable
 from torchvision.transforms import transforms
+import numpy as np
 
 
 class TransformLoader:
-    def __init__(self, image_size, rotate = 0,
+    def __init__(self, image_size, rotate=0,
                  normalize_param=dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                  jitter_param=dict(Brightness=0.4, Contrast=0.4, Color=0.4)):
         self.image_size = image_size
@@ -93,7 +95,8 @@ def get_args():
     parser.add_argument('-lf', '--log_freq', default=10, type=int, help="show result after each show_every iter.")
     parser.add_argument('-sf', '--save_freq', default=100, type=int, help="save model after each save_every iter.")
     parser.add_argument('-tf', '--test_freq', default=100, type=int, help="test model after each test_every iter.")
-    parser.add_argument('-ms', '--max_steps', default=50000, type=int, help="number of steps before stopping")
+    # parser.add_argument('-ms', '--max_steps', default=50000, type=int, help="number of steps before stopping")
+    parser.add_argument('-ep', '--epochs', default=1, type=int, help="number of epochs before stopping")
 
     parser.add_argument('-1cf', '--first_conv_filter', default=10, type=int, help="")
     parser.add_argument('-2cf', '--second_conv_filter', default=7, type=int, help="")
@@ -108,3 +111,25 @@ def get_args():
     args = parser.parse_args()
 
     return args
+
+
+def test_model(net, args, dataLoader):
+    right, error = 0, 0
+    for _, (test1, test2) in enumerate(dataLoader, 1):
+        if args.cuda:
+            test1, test2 = test1.cuda(), test2.cuda()
+        test1, test2 = Variable(test1), Variable(test2)
+        output = net.forward(test1, test2).data.cpu().numpy()
+        pred = np.argmax(output)
+        if pred == 0:
+            right += 1
+        else:
+            error += 1
+
+    return
+
+    print('*' * 70)
+    print('epoch: %d, batch: [%d]\tTest set\tcorrect:\t%d\terror:\t%d\taccuracy:\t%f' % (
+        epoch, total_batch_id, right, error, right * 1.0 / (right + error)))
+    print('*' * 70)
+    queue.append(right * 1.0 / (right + error))

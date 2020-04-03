@@ -66,14 +66,11 @@ class Siamese(nn.Module):
                 nn.Conv2d(256, 256, args.fifth_conv_filter),
                 nn.ReLU(),  # 256@56*56
                 nn.MaxPool2d(2),  # 256@28*28
+                #
+                # nn.Conv2d(256, 256, args.sixth_conv_filter),
+                # nn.ReLU(),  # 256@56*56
+                # nn.MaxPool2d(2),  # 256@28*28
 
-                nn.Conv2d(256, 256, args.sixth_conv_filter),
-                nn.ReLU(),  # 256@56*56
-                nn.MaxPool2d(2),  # 256@28*28
-
-                nn.Conv2d(256, 256, args.seventh_conv_filter),
-                nn.ReLU(),  # 256@56*56
-                nn.MaxPool2d(2),  # 256@28*28
 
                 # nn.Conv2d(256, 512, 4),
                 # nn.ReLU(),  # 512@25*25
