@@ -134,7 +134,7 @@ def main():
                 t.set_postfix(loss=f'{train_loss / batch_id:.4f}', train_acc=f'{metric.get_acc():.4f}')
 
                 if total_batch_id % args.log_freq == 0:
-                    print('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
+                    logger.info('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
                         epoch, batch_id, metric.get_acc(), train_loss / args.log_freq, time.time() - time_start))
                     train_loss = 0
                     metric.reset_acc()
@@ -169,10 +169,6 @@ def main():
                             right += 1
                         else:
                             error += 1
-
-                        if np.random.random() < 0.1:
-                            print('right: ', right)
-                            print('error: ', error)
 
                     val_acc = right * 1.0 / (right + error)
                     logger.info('*' * 70)
