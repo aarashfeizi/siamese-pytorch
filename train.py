@@ -112,6 +112,7 @@ def main():
     for epoch in range(epochs):
 
         train_loss = 0
+        metric.reset_acc()
 
         with tqdm(total=len(trainLoader), desc=f'Epoch {epoch + 1}/{args.epochs}') as t:
             for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
@@ -133,12 +134,12 @@ def main():
                 total_batch_id += 1
                 t.set_postfix(loss=f'{train_loss / batch_id:.4f}', train_acc=f'{metric.get_acc():.4f}')
 
-                if total_batch_id % args.log_freq == 0:
-                    logger.info('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
-                        epoch, batch_id, metric.get_acc(), train_loss / args.log_freq, time.time() - time_start))
-                    train_loss = 0
-                    metric.reset_acc()
-                    time_start = time.time()
+                # if total_batch_id % args.log_freq == 0:
+                #     logger.info('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
+                #         epoch, batch_id, metric.get_acc(), train_loss / args.log_freq, time.time() - time_start))
+                #     train_loss = 0
+                #     metric.reset_acc()
+                #     time_start = time.time()
 
                 if total_batch_id % args.test_freq == 0:
 
@@ -188,6 +189,8 @@ def main():
                         torch.save(net.state_dict(),
                                    args.save_path + '/model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(
                                        val_acc) + '.pt')
+                    else:
+                        logger.info('Not saving, best val [%f]' % max_val_acc)
 
                     queue.append(right * 1.0 / (right + error))
                 train_losses.append(train_loss)
