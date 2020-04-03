@@ -143,6 +143,9 @@ def main():
 
                 if total_batch_id % args.test_freq == 0:
 
+                    train_loss = 0
+                    metric.reset_acc()
+
                     right, error = 0, 0
                     val_label = np.zeros(shape=args.way, dtype=np.float32)
                     val_label[0] = 1
@@ -174,9 +177,6 @@ def main():
                     val_acc = right * 1.0 / (right + error)
                     logger.info('*' * 70)
 
-                    t.set_postfix(loss=f'{train_loss / batch_id:.4f}', train_acc=f'{metric.get_acc():.4f}',
-                                  val_acc=f'{val_acc:.4f}', val_loss=f'{val_loss:.4f}')
-                    t.set_postfix()
                     logger.info(
                         'epoch: %d, batch: [%d]\tVal set\tcorrect:\t%d\terror:\t%d\tval_acc:%f\tval_loss:\t%f' % (
                             epoch, batch_id, right, error, val_acc, val_loss))
