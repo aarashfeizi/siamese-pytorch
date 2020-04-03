@@ -1,6 +1,8 @@
-import pandas as pd
-import os
 import argparse
+import os
+
+import pandas as pd
+
 
 def _check_dir(path):
     return os.path.isdir(path)
@@ -10,10 +12,12 @@ def load_hotels_data(path):
     hotel_label_list = []
     cam_web_list = []
     image_list = []
+    super_class_list = []
 
     fst_l_d = os.listdir(path)  # e.g. 1 10 11 12
 
     label = 0
+    super_class = 0
 
     for f_dir in fst_l_d:
         scd_path = os.path.join(path, f_dir)
@@ -23,7 +27,7 @@ def load_hotels_data(path):
 
         scd_l_d = os.listdir(scd_path)  # e.g. 9645 20303 3291 35913
 
-        for s_dir in scd_l_d:
+        for s_dir in scd_l_d:  # All same super_class
             thd_path = os.path.join(scd_path, s_dir)
 
             if not _check_dir(thd_path):
@@ -53,15 +57,17 @@ def load_hotels_data(path):
 
                 for image in images:
                     image_path = os.path.join(imagedir_path, image)
-
-                    image_list.append(image_path)
+                    image_list.append(image_path[image_path.find('images'):])
                     hotel_label_list.append(label)
                     cam_web_list.append(is_website)
+                    super_class_list.append(super_class)
 
             label += 1
+        super_class += 1
 
-    dataset = pd.DataFrame({'image': image_list, 'hotel_label': hotel_label_list, 'is_website': cam_web_list})
-    dataset.to_csv('image_label.csv', index=False, header=True)
+    dataset = pd.DataFrame({'image': image_list, 'hotel_label': hotel_label_list, 'super_class': super_class_list,
+                           'is_website': cam_web_list})
+    dataset.to_csv('image_label_2.csv', index=False, header=True)
     return dataset
 
 
@@ -77,4 +83,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
