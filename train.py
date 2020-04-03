@@ -131,8 +131,7 @@ def main():
 
                 opt.step()
                 total_batch_id += 1
-                t.set_postfix(loss=f'{train_loss / batch_id:.4f}')
-                t.set_postfix(train_acc=f'{metric.get_acc():.4f}')
+                t.set_postfix(loss=f'{train_loss / batch_id:.4f}', train_acc=f'{metric.get_acc():.4f}')
 
                 if total_batch_id % args.log_freq == 0:
                     print('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
@@ -177,7 +176,10 @@ def main():
 
                     val_acc = right * 1.0 / (right + error)
                     logger.info('*' * 70)
-                    t.set_postfix(val_acc=f'{val_acc:.4f}')
+
+                    t.set_postfix(loss=f'{train_loss / batch_id:.4f}', train_acc=f'{metric.get_acc():.4f}',
+                                  val_acc=f'{val_acc:.4f}', val_loss=f'{val_loss:.4f}')
+                    t.set_postfix()
                     logger.info(
                         'epoch: %d, batch: [%d]\tVal set\tcorrect:\t%d\terror:\t%d\tval_acc:%f\tval_loss:\t%f' % (
                             epoch, batch_id, right, error, val_acc, val_loss))
