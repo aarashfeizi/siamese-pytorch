@@ -28,7 +28,9 @@ def load_hotels_data(path):
     image_list = []
     super_class_list = []
 
-    if os.path.exists(os.path.join(path, 'image_label.csv')):
+    org_path = path
+
+    if os.path.exists(os.path.join(path, 'hotel50-image_label.csv')):
 
         print('Found csv!')
 
@@ -93,7 +95,7 @@ def load_hotels_data(path):
 
         dataset = pd.DataFrame({'image': image_list, 'hotel_label': hotel_label_list, 'super_class': super_class_list,
                                 'is_website': cam_web_list})
-        dataset.to_csv('image_label.csv', index=False, header=True)
+        dataset.to_csv(os.path.join(org_path, 'hotel50-image_label.csv'), index=False, header=True)
 
     return dataset
 
