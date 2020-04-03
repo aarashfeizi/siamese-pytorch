@@ -21,6 +21,7 @@ def load_hotels_data(path):
 
     for f_dir in fst_l_d:
         scd_path = os.path.join(path, f_dir)
+        print(scd_path)
 
         if not _check_dir(scd_path):
             continue
