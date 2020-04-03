@@ -194,7 +194,27 @@ def main():
 
                 t.update()
 
-        #  learning_rate = learning_rate * 0.95
+    # testing
+    tests_right, tests_error = 0, 0
+
+    for _, (test1, test2) in enumerate(testLoader, 1):
+        if args.cuda:
+            test1, test2 = test1.cuda(), test2.cuda()
+        test1, test2 = Variable(test1), Variable(test2)
+        output = net.forward(test1, test2).data.cpu().numpy()
+        pred = np.argmax(output)
+        if pred == 0:
+            tests_right += 1
+        else:
+            tests_error += 1
+
+    test_acc = tests_right * 1.0 / (tests_right + tests_error)
+    logger.info('$' * 70)
+    logger.info(
+        'TEST:\tTest set\tcorrect:\t%d\terror:\t%d\ttest_acc:%f\t' % (tests_right, tests_error, test_acc))
+    logger.info('$' * 70)
+
+    #  learning_rate = learning_rate * 0.95
 
     with open('train_losses', 'wb') as f:
         pickle.dump(train_losses, f)
