@@ -122,6 +122,7 @@ def main():
                 else:
                     img1, img2, label = Variable(img1), Variable(img2), Variable(label)
 
+                net.train()
                 opt.zero_grad()
 
                 output = net.forward(img1, img2)
@@ -143,7 +144,7 @@ def main():
                 #     time_start = time.time()
 
                 if total_batch_id % args.test_freq == 0:
-
+                    net.eval()
                     right, error = 0, 0
                     val_label = np.zeros(shape=args.way, dtype=np.float32)
                     val_label[0] = 1
