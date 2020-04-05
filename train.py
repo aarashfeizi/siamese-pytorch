@@ -180,11 +180,12 @@ def main():
                             epoch, batch_id, right, error, val_acc, val_loss))
                     logger.info('*' * 70)
 
-                    if val_acc > max_val_acc == 0:
+                    if val_acc > max_val_acc:
                         logger.info(
                             'saving model... current val acc: [%f], previous val acc [%f]' % (val_acc, max_val_acc))
                         max_val_acc = val_acc
-                        best_model = 'model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(val_acc) + '.pt'
+                        best_model = 'model-inter-' + str(total_batch_id + 1) + '-epoch-' + str(
+                            epoch + 1) + '-val-acc-' + str(val_acc) + '.pt'
                         torch.save({'epoch': epoch,
                                     'model_state_dict': net.state_dict()},
                                    args.save_path + '/model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(
