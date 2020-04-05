@@ -2,6 +2,7 @@ import argparse
 import os
 import statistics
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -30,11 +31,13 @@ def load_hotels_data(path):
 
     org_path = path
 
-    if os.path.exists(os.path.join(path, 'hotel50-image_label.csv')):
-
+    # if os.path.exists(os.path.join(path, 'hotel50-image_label.csv')):
+    if os.path.exists(os.path.join('', 'image_label.csv')):
+        print('hehe')
         print('Found csv!')
 
-        dataset = pd.read_csv(os.path.join(path, 'hotel50-image_label.csv'))
+        # dataset = pd.read_csv(os.path.join(path, 'hotel50-image_label.csv'))
+        dataset = pd.read_csv(os.path.join('', 'image_label.csv'))
 
     else:
         print('File not found, creating csv...')
@@ -102,12 +105,15 @@ def load_hotels_data(path):
 
 def get_size(df, path):
     sizes = []
-
+    types = []
     for idx, row in df.iterrows():
         img = Image.open(os.path.join(path, row[0]))
         sizes.append(img.size)
+        types.append(img.mode)
+        if idx % 1000 == 0:
+            print(get_stats(np.array(list(zip(*sizes))[1])))
 
-    return sizes
+    return sizes, types
 
 
 def main():
@@ -119,13 +125,40 @@ def main():
 
     df = load_hotels_data(args.path)
 
-    sizes = get_size(df, args.path)
+    sizes, types = get_size(df, args.path)
+
+    df['shape0'] = np.array(list(zip(*sizes))[0])
+    df['shape1'] = np.array(list(zip(*sizes))[1])
+    df['channel'] = np.array(types)
+
+    df.to_csv(os.path.join(args.path, 'hotel50-image_label.csv'), index=False, header=True)
 
     print('shape 0')
     print(get_stats(np.array(list(zip(*sizes))[0])))
     print('*' * 70)
     print('shape 1')
     print(get_stats(np.array(list(zip(*sizes))[1])))
+
+    sizes_str = list(map(lambda x: str(x), sizes))
+    sizes_unq, sizes_cnt = np.unique(sizes_str, return_counts=True)
+    sizes_cnt_n = sizes_cnt / sizes_cnt.max()
+    sizes_dict = {size: count for size, count in zip(sizes_unq, sizes_cnt)}
+    sizes_dict_n = {size: count for size, count in zip(sizes_unq, sizes_cnt_n)}
+
+    areas = [sizes_dict_n[str(p)] * 300 for p in sizes_unq]
+    cmaps = [sizes_dict[str(p)] for p in sizes_unq]
+
+
+    plt.scatter(x=np.array(list(zip(*sizes_unq))[0]), y=np.array(list(zip(*sizes_unq))[1]), s=areas, alpha=0.4, cmap='viridis',
+                c=cmaps)
+    plt.title('Image Size Dist')
+    plt.xlabel('Shape 0')
+    plt.ylabel('Shape 1')
+    plt.colorbar(label='Count')
+
+    plt.savefig('final.png')
+
+# https://jakevdp.github.io/PythonDataScienceHandbook/04.06-customizing-legends.html
 
 if __name__ == '__main__':
     main()

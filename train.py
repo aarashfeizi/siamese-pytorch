@@ -108,6 +108,7 @@ def main():
     metric = utils.Metric()
 
     max_val_acc = 0
+    best_model = ''
 
     for epoch in range(epochs):
 
@@ -183,11 +184,13 @@ def main():
                         logger.info(
                             'saving model... current val acc: [%f], previous val acc [%f]' % (val_acc, max_val_acc))
                         max_val_acc = val_acc
-                        torch.save(net.state_dict(),
+                        best_model = 'model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(val_acc) + '.pt'
+                        torch.save({'epoch': epoch,
+                                    'model_state_dict': net.state_dict()},
                                    args.save_path + '/model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(
                                        val_acc) + '.pt')
                     else:
-                        logger.info('Not saving, best val [%f]' % max_val_acc)
+                        logger.info('Not saving, best val [%f], current was [%f]' % (max_val_acc, val_acc))
 
                     queue.append(right * 1.0 / (right + error))
                 train_losses.append(train_loss)
@@ -196,6 +199,12 @@ def main():
 
     # testing
     tests_right, tests_error = 0, 0
+
+    checkpoint = torch.load(best_model)
+    logger.info('Loading model from epoch [%d]' % checkpoint['epoch'])
+    net.load_state_dict(checkpoint['model_state_dict'])
+
+    net.eval()
 
     for _, (test1, test2) in enumerate(testLoader, 1):
         if args.cuda:
