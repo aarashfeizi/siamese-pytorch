@@ -8,9 +8,11 @@ class Siamese(nn.Module):
         super(Siamese, self).__init__()
         if args.dataset_name != 'hotels':
             if args.dataset_name == 'cub':  # 84 * 84
+                print('CUB MODE')
                 input_channel = 3
 
             elif args.dataset_name == 'omniglot':
+                print('OMNIGLOT MODE')
                 input_channel = 1
             else:
                 raise Exception('Dataset not supported')
@@ -45,6 +47,8 @@ class Siamese(nn.Module):
             self.out = nn.Linear(args.last_layer, 1)
 
         elif args.dataset_name == 'hotels':
+            print('HOTELS MODE')
+
             input_channel = 3
             self.conv = nn.Sequential(
                 nn.Conv2d(input_channel, 64, args.first_conv_filter),  # 64@491*491
