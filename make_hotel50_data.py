@@ -31,13 +31,11 @@ def load_hotels_data(path):
 
     org_path = path
 
-    # if os.path.exists(os.path.join(path, 'hotel50-image_label.csv')):
-    if os.path.exists(os.path.join('', 'image_label.csv')):
+    if os.path.exists(os.path.join(path, 'hotel50-image_label.csv')):
         print('hehe')
         print('Found csv!')
 
-        # dataset = pd.read_csv(os.path.join(path, 'hotel50-image_label.csv'))
-        dataset = pd.read_csv(os.path.join('', 'image_label.csv'))
+        dataset = pd.read_csv(os.path.join(path, 'hotel50-image_label.csv'))
 
     else:
         print('File not found, creating csv...')
@@ -145,20 +143,45 @@ def main():
     sizes_dict = {size: count for size, count in zip(sizes_unq, sizes_cnt)}
     sizes_dict_n = {size: count for size, count in zip(sizes_unq, sizes_cnt_n)}
 
-    areas = [sizes_dict_n[str(p)] * 300 for p in sizes_unq]
-    cmaps = [sizes_dict[str(p)] for p in sizes_unq]
+    areas = [sizes_dict_n[str(p)] * 300 for p in sizes]
+    cmaps = [sizes_dict[str(p)] for p in sizes]
 
-
-    plt.scatter(x=np.array(list(zip(*sizes_unq))[0]), y=np.array(list(zip(*sizes_unq))[1]), s=areas, alpha=0.4, cmap='viridis',
+    plt.scatter(x=np.array(list(zip(*sizes))[0]), y=np.array(list(zip(*sizes))[1]), s=areas, alpha=0.4,
+                cmap='viridis',
                 c=cmaps)
     plt.title('Image Size Dist')
     plt.xlabel('Shape 0')
     plt.ylabel('Shape 1')
     plt.colorbar(label='Count')
 
-    plt.savefig('final.png')
+    plt.savefig('final_2.png')
+
 
 # https://jakevdp.github.io/PythonDataScienceHandbook/04.06-customizing-legends.html
 
 if __name__ == '__main__':
     main()
+
+
+###
+# plt.figure(figsize=(100, 100))
+# font = {'family' : 'normal',
+#         'weight' : 'bold',
+#         'size'   : 100}
+# matplotlib.rc('font', **font)
+# sizes_str = list(map(lambda x: str(x), sizes))
+# sizes_unq, sizes_cnt = np.unique(sizes_str, return_counts=True)
+# sizes_cnt_n = sizes_cnt / sizes_cnt.max()
+# sizes_dict = {size: count for size, count in zip(sizes_unq, sizes_cnt)}
+# sizes_dict_n = {size: count for size, count in zip(sizes_unq, sizes_cnt_n)}
+# areas = [sizes_dict_n[str(p)] * 50000 for p in sizes]
+# cmaps = [sizes_dict[str(p)] for p in sizes]
+# plt.scatter(x=np.array(list(zip(*sizes))[0]), y=np.array(list(zip(*sizes))[1]), s=areas, alpha=0.4,
+#             cmap='viridis',
+#             c=cmaps)
+# plt.title('Image Size Dist')
+# plt.xlabel('Shape 0')
+# plt.ylabel('Shape 1')
+# plt.colorbar(label='Count')
+# plt.savefig('final_2.png')
+###
