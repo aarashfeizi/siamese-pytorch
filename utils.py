@@ -125,19 +125,21 @@ def get_args():
 class ModelMethods:
 
     def __init__(self, args):
+        id_str = str(time.time())
+        id_str = '-time_' + id_str[:id_str.find('.')]
+
         self.model_name = self._parse_args(args)
-        self.save_path = os.path.join(args.save_path, self.model_name)
+        self.save_path = os.path.join(args.save_path, self.model_name + id_str)
 
         if not os.path.exists(self.save_path):
             os.mkdir(self.save_path)
-            print(f'Created save directory {self.save_path}!')
+            print(f'Created save directory {self.save_path}')
         else:
             print(f'Save directory {self.save_path} already exists') # almost impossible
 
     def _parse_args(self, args):
         name = 'model'
-        id_str = str(time.time())
-        id_str = id_str[:id_str.find('.')]
+
         important_args = ['dataset_name',
                           'aug',
                           'rotate',
@@ -159,7 +161,7 @@ class ModelMethods:
             if str(arg) in important_args:
                 name += '-' + str(arg) + '_' + str(getattr(args, arg))
 
-        return name + '-time_' + id_str
+        return name
 
     def train(self, net, loss_fn, args, trainLoader, valLoader, logger):
         net.train()
