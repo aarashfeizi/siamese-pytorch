@@ -25,7 +25,9 @@ def main():
 
     image_size = -1
 
-    if args.dataset_name == 'cub':
+    if args.image_size > 0:
+        image_size = args.image_size
+    elif args.dataset_name == 'cub':
         image_size = 84
     elif args.dataset_name == 'omniglot':
         image_size = 105
@@ -80,6 +82,10 @@ def main():
     loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean')
     net = Siamese(args)
 
+    model_methods = utils.ModelMethods(args)
+
+    print(model_methods.save_path)
+
     # multi gpu
     if len(args.gpu_ids.split(",")) > 1:
         net = torch.nn.DataParallel(net)
@@ -89,14 +95,14 @@ def main():
 
     if args.model_name == '':  # train
         logger.info('Training')
-        net, best_model = utils.train(net, loss_fn, args, trainLoader, valLoader, logger)
+        net, best_model = model_methods.train(net, loss_fn, args, trainLoader, valLoader, logger)
     else:  # test
         logger.info('Testing')
         best_model = args.model_name
 
     # testing
     logger.info(f"Loading {best_model} model...")
-    net = utils.load_model(args, net, best_model, logger)
+    net = model_methods.load_model(args, net, best_model, logger)
 
     net.eval()
 

@@ -86,10 +86,11 @@ def get_args():
     parser.add_argument('-gpu', '--gpu_ids', default='', help="gpu ids used to train")  # before: default="0,1,2,3"
 
     parser.add_argument('-dsn', '--dataset_name', default='omniglot', choices=['omniglot', 'cub', 'hotels'])
-    parser.add_argument('-dsp', '--dataset_path', default='CUB_200_2011/')
+    parser.add_argument('-dsp', '--dataset_path', default='CUB/')
     parser.add_argument('-sdp', '--subdir_path', default='images/')
     parser.add_argument('-trp', '--train_path', default='./omniglot/python/images_background')
     parser.add_argument('-tsp', '--test_path', default='./omniglot/python/images_evaluation')
+    parser.add_argument('-is', '--image_size', default=0, type=int, help="Image Size")
     parser.add_argument('-sp', '--save_path', default='models/', help="path to store model")
     parser.add_argument('-a', '--aug', default=False, action='store_true')
     parser.add_argument('-r', '--rotate', default=0.0, type=float, help='store_true')
@@ -121,150 +122,194 @@ def get_args():
 
     return args
 
+class ModelMethods:
 
-def train(net, loss_fn, args, trainLoader, valLoader, logger):
-    net.train()
+    def __init__(self, args):
+        self.model_name = self._parse_args(args)
+        self.save_path = os.path.join(args.save_path, self.model_name)
 
-    opt = torch.optim.Adam(net.parameters(), lr=args.lr)
-    opt.zero_grad()
+        if not os.path.exists(self.save_path):
+            os.mkdir(self.save_path)
+            print(f'Created save directory {self.save_path}!')
+        else:
+            print(f'Save directory {self.save_path} already exists') # almost impossible
 
-    train_losses = []
-    time_start = time.time()
-    queue = deque(maxlen=20)
+    def _parse_args(self, args):
+        name = 'model'
+        id_str = str(time.time())
+        id_str = id_str[:id_str.find('.')]
+        important_args = ['dataset_name',
+                          'aug',
+                          'rotate',
+                          'way',
+                          'times',
+                          'batch_size',
+                          'lr',
+                          'ep',
+                          '-1cf',
+                          '-2cf',
+                          '-3cf',
+                          '-4cf',
+                          '-5cf',
+                          '-6cf',
+                          '-7cf',
+                          '-co',
+                          '-ll']
+        for arg in vars(args):
+            if str(arg) in important_args:
+                name += '-' + str(arg) + '_' + str(getattr(args, arg))
 
-    # print('steps:', args.max_steps)
+        return name + '-time_' + id_str
 
-    # epochs = int(np.ceil(args.max_steps / len(trainLoader)))
-    epochs = args.epochs
-    print('epochs: ', epochs)
+    def train(self, net, loss_fn, args, trainLoader, valLoader, logger):
+        net.train()
 
-    total_batch_id = 0
-    metric = Metric()
+        opt = torch.optim.Adam(net.parameters(), lr=args.lr)
+        opt.zero_grad()
 
-    max_val_acc = 0
-    best_model = ''
+        train_losses = []
+        time_start = time.time()
+        queue = deque(maxlen=20)
 
-    for epoch in range(epochs):
+        # print('steps:', args.max_steps)
 
-        train_loss = 0
-        metric.reset_acc()
+        # epochs = int(np.ceil(args.max_steps / len(trainLoader)))
+        epochs = args.epochs
+        print('epochs: ', epochs)
 
-        with tqdm(total=len(trainLoader), desc=f'Epoch {epoch + 1}/{args.epochs}') as t:
-            for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
-                if args.cuda:
-                    img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
-                else:
-                    img1, img2, label = Variable(img1), Variable(img2), Variable(label)
+        total_batch_id = 0
+        metric = Metric()
 
-                net.train()
-                opt.zero_grad()
+        max_val_acc = 0
+        best_model = ''
 
-                output = net.forward(img1, img2)
-                metric.update_acc(output, label)
-                loss = loss_fn(output, label)
+        for epoch in range(epochs):
 
-                train_loss += loss.item()
-                loss.backward()
+            train_loss = 0
+            metric.reset_acc()
 
-                opt.step()
-                total_batch_id += 1
-                t.set_postfix(loss=f'{train_loss / batch_id:.4f}', train_acc=f'{metric.get_acc():.4f}')
-
-                # if total_batch_id % args.log_freq == 0:
-                #     logger.info('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
-                #         epoch, batch_id, metric.get_acc(), train_loss / args.log_freq, time.time() - time_start))
-                #     train_loss = 0
-                #     metric.reset_acc()
-                #     time_start = time.time()
-
-                if total_batch_id % args.test_freq == 0:
-                    net.eval()
-                    right, error = 0, 0
-                    val_label = np.zeros(shape=args.way, dtype=np.float32)
-                    val_label[0] = 1
-                    val_label = torch.from_numpy(val_label).reshape((args.way, 1))
-
+            with tqdm(total=len(trainLoader), desc=f'Epoch {epoch + 1}/{args.epochs}') as t:
+                for batch_id, (img1, img2, label) in enumerate(trainLoader, 1):
                     if args.cuda:
-                        val_label = Variable(val_label.cuda())
+                        img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
                     else:
-                        val_label = Variable(val_label)
+                        img1, img2, label = Variable(img1), Variable(img2), Variable(label)
 
-                    for _, (test1, test2) in enumerate(valLoader, 1):
+                    net.train()
+                    opt.zero_grad()
+
+                    output = net.forward(img1, img2)
+                    metric.update_acc(output, label)
+                    loss = loss_fn(output, label)
+
+                    train_loss += loss.item()
+                    loss.backward()
+
+                    opt.step()
+                    total_batch_id += 1
+                    t.set_postfix(loss=f'{train_loss / batch_id:.4f}', train_acc=f'{metric.get_acc():.4f}')
+
+                    # if total_batch_id % args.log_freq == 0:
+                    #     logger.info('epoch: %d, batch: [%d]\tacc:\t%.5f\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
+                    #         epoch, batch_id, metric.get_acc(), train_loss / args.log_freq, time.time() - time_start))
+                    #     train_loss = 0
+                    #     metric.reset_acc()
+                    #     time_start = time.time()
+
+                    if total_batch_id % args.test_freq == 0:
+                        net.eval()
+                        right, error = 0, 0
+                        val_label = np.zeros(shape=args.way, dtype=np.float32)
+                        val_label[0] = 1
+                        val_label = torch.from_numpy(val_label).reshape((args.way, 1))
+
                         if args.cuda:
-                            test1, test2 = test1.cuda(), test2.cuda()
-                        test1, test2 = Variable(test1), Variable(test2)
-                        output = net.forward(test1, test2)
-                        val_loss = loss_fn(output, val_label)
-                        output = output.data.cpu().numpy()
-                        pred = np.argmax(output)
-                        if pred == 0:
-                            right += 1
+                            val_label = Variable(val_label.cuda())
                         else:
-                            error += 1
+                            val_label = Variable(val_label)
 
-                    val_acc = right * 1.0 / (right + error)
-                    logger.info('*' * 70)
+                        for _, (test1, test2) in enumerate(valLoader, 1):
+                            if args.cuda:
+                                test1, test2 = test1.cuda(), test2.cuda()
+                            test1, test2 = Variable(test1), Variable(test2)
+                            output = net.forward(test1, test2)
+                            val_loss = loss_fn(output, val_label)
+                            output = output.data.cpu().numpy()
+                            pred = np.argmax(output)
+                            if pred == 0:
+                                right += 1
+                            else:
+                                error += 1
 
-                    logger.info(
-                        'epoch: %d, batch: [%d]\tVal set\tcorrect:\t%d\terror:\t%d\tval_acc:%f\tval_loss:\t%f' % (
-                            epoch, batch_id, right, error, val_acc, val_loss))
-                    logger.info('*' * 70)
+                        val_acc = right * 1.0 / (right + error)
+                        logger.info('*' * 70)
 
-                    if val_acc > max_val_acc:
                         logger.info(
-                            'saving model... current val acc: [%f], previous val acc [%f]' % (val_acc, max_val_acc))
-                        max_val_acc = val_acc
-                        best_model = 'model-inter-' + str(total_batch_id + 1) + '-epoch-' + str(
-                            epoch + 1) + '-val-acc-' + str(val_acc) + '.pt'
-                        torch.save({'epoch': epoch,
-                                    'model_state_dict': net.state_dict()},
-                                   args.save_path + '/model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(
-                                       val_acc) + '.pt')
-                    else:
-                        logger.info('Not saving, best val [%f], current was [%f]' % (max_val_acc, val_acc))
+                            'epoch: %d, batch: [%d]\tVal set\tcorrect:\t%d\terror:\t%d\tval_acc:%f\tval_loss:\t%f' % (
+                                epoch, batch_id, right, error, val_acc, val_loss))
+                        logger.info('*' * 70)
 
-                    queue.append(right * 1.0 / (right + error))
-                train_losses.append(train_loss)
+                        if val_acc > max_val_acc:
+                            logger.info(
+                                'saving model... current val acc: [%f], previous val acc [%f]' % (val_acc, max_val_acc))
+                            best_model = self.save_model(args, net, total_batch_id, logger)
+                            max_val_acc = val_acc
 
-                t.update()
+                        else:
+                            logger.info('Not saving, best val [%f], current was [%f]' % (max_val_acc, val_acc))
 
-    with open('train_losses', 'wb') as f:
-        pickle.dump(train_losses, f)
+                        queue.append(right * 1.0 / (right + error))
+                    train_losses.append(train_loss)
 
-    acc = 0.0
-    for d in queue:
-        acc += d
-    print("#" * 70)
-    print('queue len: ', len(queue))
-    print("final accuracy with train_losses: ", acc / len(queue))
+                    t.update()
 
-    return net, best_model
+        with open('train_losses', 'wb') as f:
+            pickle.dump(train_losses, f)
 
+        acc = 0.0
+        for d in queue:
+            acc += d
+        print("#" * 70)
+        print('queue len: ', len(queue))
+        print("final accuracy with train_losses: ", acc / len(queue))
 
-# def test_model(net, args, dataLoader):
-#     right, error = 0, 0
-#     for _, (test1, test2) in enumerate(dataLoader, 1):
-#         if args.cuda:
-#             test1, test2 = test1.cuda(), test2.cuda()
-#         test1, test2 = Variable(test1), Variable(test2)
-#         output = net.forward(test1, test2).data.cpu().numpy()
-#         pred = np.argmax(output)
-#         if pred == 0:
-#             right += 1
-#         else:
-#             error += 1
-#
-#     return
-#
-#     print('*' * 70)
-#     print('epoch: %d, batch: [%d]\tTest set\tcorrect:\t%d\terror:\t%d\taccuracy:\t%f' % (
-#         epoch, total_batch_id, right, error, right * 1.0 / (right + error)))
-#     print('*' * 70)
-#     queue.append(right * 1.0 / (right + error))
+        return net, best_model
 
 
-def load_model(args, net, best_model, logger):
-    checkpoint = torch.load(os.path.join(args.save_path, best_model))
-    logger.info('Loading model %s from epoch [%d]' % (best_model, checkpoint['epoch']))
-    net.load_state_dict(checkpoint['model_state_dict'])
-    return net
+    # def test_model(net, args, dataLoader):
+    #     right, error = 0, 0
+    #     for _, (test1, test2) in enumerate(dataLoader, 1):
+    #         if args.cuda:
+    #             test1, test2 = test1.cuda(), test2.cuda()
+    #         test1, test2 = Variable(test1), Variable(test2)
+    #         output = net.forward(test1, test2).data.cpu().numpy()
+    #         pred = np.argmax(output)
+    #         if pred == 0:
+    #             right += 1
+    #         else:
+    #             error += 1
+    #
+    #     return
+    #
+    #     print('*' * 70)
+    #     print('epoch: %d, batch: [%d]\tTest set\tcorrect:\t%d\terror:\t%d\taccuracy:\t%f' % (
+    #         epoch, total_batch_id, right, error, right * 1.0 / (right + error)))
+    #     print('*' * 70)
+    #     queue.append(right * 1.0 / (right + error))
+
+
+    def load_model(self, args, net, best_model, logger):
+        checkpoint = torch.load(os.path.join(args.save_path, best_model))
+        logger.info('Loading model %s from epoch [%d]' % (best_model, checkpoint['epoch']))
+        net.load_state_dict(checkpoint['model_state_dict'])
+        return net
+
+
+    def save_model(self, args, net, total_batch_id, epoch, val_acc):
+        best_model = 'model-inter-' + str(total_batch_id + 1) + '-epoch-' + str(
+            epoch + 1) + '-val-acc-' + str(val_acc) + '.pt'
+        torch.save({'epoch': epoch,
+                    'model_state_dict': net.state_dict()},
+                   self.save_path + '/model-inter-' + str(total_batch_id + 1) + 'val-acc-' + str(
+                       val_acc) + '.pt')
+        return best_model
